@@ -1,0 +1,11 @@
+LICENSE
+README.md
+pyproject.toml
+setup.py
+pse_core/__init__.py
+pse_core/core.pyi
+pse_core.egg-info/PKG-INFO
+pse_core.egg-info/SOURCES.txt
+pse_core.egg-info/dependency_links.txt
+pse_core.egg-info/not-zip-safe
+pse_core.egg-info/top_level.txt

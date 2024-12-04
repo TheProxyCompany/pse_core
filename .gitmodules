@@ -4,3 +4,6 @@
 [submodule "external/tokenizers-cpp"]
 	path = external/tokenizers-cpp
 	url = https://github.com/mlc-ai/tokenizers-cpp.git
+[submodule "external/nanobind"]
+	path = external/nanobind
+	url = https://github.com/wjakob/nanobind

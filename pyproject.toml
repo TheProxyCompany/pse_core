@@ -1,0 +1,42 @@
+[build-system]
+requires = [
+    "setuptools>=42",
+    "wheel",
+    "cmake>=3.12",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pse_core"
+version = "0.0.1"
+authors = [
+    { name = "Jack Wind", email = "jckwind11@gmail.com" },
+    { name = "The Proxy Company", email = "contact@theproxy.company" }
+]
+description = "Proxy Structuring Engine: Core library"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+
+[tool.mypy]
+files = "setup.py"
+strict = true
+show_error_codes = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = ["ninja"]
+ignore_missing_imports = true
+
+[tool.cibuildwheel]
+before-build = "rm -rf {project}/build && rm -rf {project}/src/*.egg-info"
+
+[tool.ruff.lint]
+extend-select = [
+  "B",    # flake8-bugbear
+  "I",    # isort
+  "PGH",  # pygrep-hooks
+  "RUF",  # Ruff-specific
+  "UP",   # pyupgrade
+]

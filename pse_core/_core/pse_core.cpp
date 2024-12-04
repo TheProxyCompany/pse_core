@@ -1,11 +1,12 @@
-#include <pybind11/pybind11.h>
-#include "include/add.h"
-#include "include/subtract.h"
+#include <nanobind/nanobind.h>
+#include "add.h"
+#include "subtract.h"
 
-namespace py = pybind11;
+namespace nb = nanobind;
+using namespace nb::literals;
 
-PYBIND11_MODULE(_core, m) {
-  m.doc() = R"pbdoc(
+NB_MODULE(_core, m) {
+    m.doc() = R"pbdoc(
         PSE Core C++ Bindings
         ---------------------
 
@@ -18,27 +19,19 @@ PYBIND11_MODULE(_core, m) {
            subtract
     )pbdoc";
 
-  m.def("add", &add, R"pbdoc(
-        Add two numbers together.
+    m.def("add", &add, "i"_a, "j"_a,
+          "Add two numbers together.\n\n"
+          "Args:\n"
+          "    i: First integer to add\n"
+          "    j: Second integer to add\n\n"
+          "Returns:\n"
+          "    Sum of the two input integers");
 
-        Args:
-            i: First integer to add
-            j: Second integer to add
-
-        Returns:
-            Sum of the two input integers
-    )pbdoc",
-        py::arg("i"), py::arg("j"));
-
-  m.def("subtract", &subtract, R"pbdoc(
-        Subtract two numbers together.
-
-        Args:
-            i: First integer to subtract from
-            j: Second integer to subtract
-
-        Returns:
-            Difference between the two input integers
-    )pbdoc",
-        py::arg("i"), py::arg("j"));
+    m.def("subtract", &subtract, "i"_a, "j"_a,
+          "Subtract two numbers together.\n\n"
+          "Args:\n"
+          "    i: First integer to subtract from\n"
+          "    j: Second integer to subtract\n\n"
+          "Returns:\n"
+          "    Difference between the two input integers");
 }

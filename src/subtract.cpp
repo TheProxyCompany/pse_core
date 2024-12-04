@@ -1,3 +1,3 @@
-#include "include/subtract.h"
+#include "subtract.h"
 
 int subtract(int i, int j) { return i - j; }
