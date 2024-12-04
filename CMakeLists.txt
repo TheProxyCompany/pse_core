@@ -25,7 +25,8 @@ find_package(Python COMPONENTS Interpreter ${DEV_MODULE} REQUIRED)
 
 # add nanobind
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/nanobind)
-include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/external/nanobind/include)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/hat-trie)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/tokenizers-cpp)
 
 # add sources
 file(GLOB_RECURSE SOURCES src/**.cpp)

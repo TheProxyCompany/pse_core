@@ -4,3 +4,6 @@
 [submodule "external/nanobind"]
 	path = external/nanobind
 	url = https://github.com/wjakob/nanobind
+[submodule "external/hat-trie"]
+	path = external/hat-trie
+	url = https://github.com/Tessil/hat-trie.git
