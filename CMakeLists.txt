@@ -6,28 +6,12 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 
-set(Python_VIRTUALENV FIRST)
 set(PYBIND11_FINDPYTHON ON)
 add_subdirectory(external/pybind11)
+include_directories(SYSTEM external/pybind11/include)
 
+file(GLOB_RECURSE SOURCES src/**.cpp)
+add_library(pse_core SHARED ${SOURCES})
+target_include_directories(pse_core PUBLIC ./include)
 
-pybind11_add_module(pse_core src/acceptor.cpp)
-target_compile_definitions(pse_core PRIVATE
-    MODULE_NAME=$<TARGET_FILE_BASE_NAME:pse_core>
-    VERSION_INFO="${PY_FULL_VERSION}"
-)
-
-set_target_properties(pse_core PROPERTIES
-    CXX_VISIBILITY_PRESET "hidden"
-    VISIBILITY_INLINES_HIDDEN true
-)
-
-# Install the Python module
-install(TARGETS pse_core
-        EXCLUDE_FROM_ALL
-        COMPONENT python_modules
-        DESTINATION ${PY_BUILD_CMAKE_MODULE_NAME}
-)
-
-include(cmake/stubgen.cmake)
-pybind11_stubgen(pse_core)
+add_subdirectory(pse_core)
