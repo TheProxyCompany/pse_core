@@ -1,0 +1,10 @@
+[submodule "pybind11"]
+    path = pse_core/external/pybind11
+    url = https://github.com/pybind/pybind11.git
+    branch = master
+
+
+[submodule "tokenizers-cpp"]
+    path = pse_core/external/tokenizers-cpp
+    url = https://github.com/mlc-ai/tokenizers-cpp.git
+    branch = main
