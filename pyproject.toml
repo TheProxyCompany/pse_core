@@ -1,10 +1,9 @@
 [build-system]
 requires = [
-    "setuptools>=42",
-    "wheel",
-    "cmake>=3.12",
+    "scikit-build-core",
+    "nanobind",
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "pse_core"
@@ -18,19 +17,15 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
 
-[tool.mypy]
-files = "setup.py"
-strict = true
-show_error_codes = true
-enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
-warn_unreachable = true
-
-[[tool.mypy.overrides]]
-module = ["ninja"]
-ignore_missing_imports = true
+[tool.scikit-build]
+build-dir = "build/{wheel_tag}"
+wheel.py-api = "cp312"
 
 [tool.cibuildwheel]
 before-build = "rm -rf {project}/build && rm -rf {project}/src/*.egg-info"
+
+[tool.cibuildwheel.macos.environment]
+MACOSX_DEPLOYMENT_TARGET = "10.14"
 
 [tool.ruff.lint]
 extend-select = [
