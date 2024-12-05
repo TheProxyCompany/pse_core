@@ -1,6 +1,6 @@
 #pragma once
 
-#include "walker_fwd.h"
+#include "walker_reference_header.h"
 #include <memory>
 #include <optional>
 #include <string>
