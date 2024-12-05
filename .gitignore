@@ -34,3 +34,5 @@
 build/
 dist/
 *.egg-info/
+_notes/
+.cache/

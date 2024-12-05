@@ -28,6 +28,9 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/nanobind)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/hat-trie)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/tokenizers-cpp)
 
+include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/external/nanobind/include)
+include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/external/hat-trie/include)
+
 # add sources
 file(GLOB_RECURSE SOURCES src/**.cpp)
 add_library(pse_core SHARED ${SOURCES})
