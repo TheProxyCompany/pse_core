@@ -1,37 +1,41 @@
 [build-system]
-requires = [
-    "scikit-build-core",
-    "nanobind",
-]
-build-backend = "scikit_build_core.build"
+requires = ["py-build-cmake", "nanobind"]
+build-backend = "py_build_cmake.build"
 
 [project]
 name = "pse_core"
-version = "0.0.1"
-authors = [
-    { name = "Jack Wind", email = "jckwind11@gmail.com" },
-    { name = "The Proxy Company", email = "contact@theproxy.company" }
-]
+version = "0.0.5"
 description = "Proxy Structuring Engine: Core library"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { file = "LICENSE" }
-
-[tool.scikit-build]
-build-dir = "build/{wheel_tag}"
-wheel.py-api = "cp312"
-
-[tool.cibuildwheel]
-before-build = "rm -rf {project}/build && rm -rf {project}/src/*.egg-info"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Jack Wind", email = "jckwind11@gmail.com"},
+    {name = "The Proxy Company", email = "contact@theproxy.company"}
+]
 
 [tool.cibuildwheel.macos.environment]
 MACOSX_DEPLOYMENT_TARGET = "10.14"
 
+[tool.py-build-cmake.cmake]
+args = ["-Wdev"]
+build_args = ["-j"]
+build_type = "Release"
+env = {}
+find_python = true
+find_python3 = false
+install_components = ["python_modules"]
+source_path = "."
+
+[tool.py-build-cmake.module]
+directory = "python"
+name = "pse_core"
+
 [tool.ruff.lint]
 extend-select = [
-  "B",    # flake8-bugbear
-  "I",    # isort
-  "PGH",  # pygrep-hooks
-  "RUF",  # Ruff-specific
-  "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "I",    # isort
+    "PGH",  # pygrep-hooks
+    "RUF",  # Ruff-specific
+    "UP"    # pyupgrade
 ]

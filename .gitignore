@@ -32,7 +32,6 @@
 *.app
 
 build/
-dist/
-*.egg-info/
 _notes/
 .cache/
+.py-build-cmake_cache/

@@ -1,40 +1,83 @@
 cmake_minimum_required(VERSION 3.10)
-project(pse_core VERSION 1.0 LANGUAGES CXX)
+cmake_policy(SET CMP0087 NEW)
 
-# set c++ standard
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED YES)
+# Project settings
+project(${PY_BUILD_CMAKE_MODULE_NAME} LANGUAGES CXX)
+set(EXTENSION_NAME _core)
+
+# C++ settings
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS NO)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
 
-# set build type
-if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+# Build type configuration
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+        "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-# set dev module
-if (CMAKE_VERSION VERSION_LESS 3.18)
-  set(DEV_MODULE Development)
+# Python configuration
+if(CMAKE_VERSION VERSION_LESS 3.18)
+    set(DEV_MODULE Development)
 else()
-  set(DEV_MODULE Development.Module)
+    set(DEV_MODULE Development.Module)
 endif()
 
-# get python
 set(Python_VIRTUALENV FIRST)
 find_package(Python COMPONENTS Interpreter ${DEV_MODULE} REQUIRED)
 
-# add nanobind
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/nanobind)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/hat-trie)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/tokenizers-cpp)
+# External dependencies
+add_subdirectory(${CMAKE_SOURCE_DIR}/external/nanobind)
+add_subdirectory(${CMAKE_SOURCE_DIR}/external/hat-trie)
+add_subdirectory(${CMAKE_SOURCE_DIR}/external/tokenizers-cpp)
 
-include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/external/nanobind/include)
-include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/external/hat-trie/include)
+# Include directories
+include_directories(
+    SYSTEM
+    ${CMAKE_SOURCE_DIR}/external/nanobind/include
+    ${CMAKE_SOURCE_DIR}/external/hat-trie/include
+)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
-# add sources
-file(GLOB_RECURSE SOURCES src/**.cpp)
-add_library(pse_core SHARED ${SOURCES})
-target_include_directories(pse_core PUBLIC ./include)
+# Source files
+file(GLOB_RECURSE pse_core_src ${CMAKE_SOURCE_DIR}/src/*.cpp)
 
-# add python module
-add_subdirectory(pse_core)
+# Main module configuration
+nanobind_add_module(
+    ${EXTENSION_NAME}
+    STABLE_ABI NB_STATIC
+    ${pse_core_src}
+)
+
+target_compile_definitions(
+    ${EXTENSION_NAME}
+    PRIVATE
+        MODULE_NAME=$<TARGET_FILE_BASE_NAME:${EXTENSION_NAME}>
+        VERSION_INFO="${PY_FULL_VERSION}"
+)
+
+target_include_directories(
+    ${EXTENSION_NAME}
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_SOURCE_DIR}/include
+)
+
+# Installation
+install(
+    TARGETS ${EXTENSION_NAME}
+    DESTINATION ${PROJECT_NAME}
+    COMPONENT python_modules
+)
+
+# Stub generation
+nanobind_add_stub(
+    ${PROJECT_NAME}_stub
+    INSTALL_TIME
+    MODULE ${PROJECT_NAME}.${EXTENSION_NAME}
+    OUTPUT ${PROJECT_NAME}/${EXTENSION_NAME}.pyi
+    MARKER_FILE ${PROJECT_NAME}/py.typed
+    COMPONENT python_modules
+)

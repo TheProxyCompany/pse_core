@@ -15,6 +15,15 @@ public:
     using State = Acceptor::State;
     using VisitedEdge = std::tuple<State, std::optional<State>, std::optional<std::string>>;
 
+    std::shared_ptr<Acceptor> acceptor_;
+    std::vector<std::shared_ptr<Walker>> accepted_history_;
+    std::set<VisitedEdge> explored_edges_;
+    State current_state_;
+    std::optional<State> target_state_;
+    std::shared_ptr<Walker> transition_walker_;
+    size_t consumed_character_count_;
+    std::optional<std::string> remaining_input_;
+
     Walker(std::shared_ptr<Acceptor> acceptor, std::optional<State> current_state = std::nullopt);
     virtual ~Walker() = default;
 
@@ -60,27 +69,31 @@ public:
     virtual std::string to_string() const;
     virtual std::string repr() const;
 
-    const std::shared_ptr<Acceptor>& get_acceptor() const { return acceptor_; }
-    const std::vector<std::shared_ptr<Walker>>& get_accepted_history() const { return accepted_history_; }
-    const std::set<VisitedEdge>& get_explored_edges() const { return explored_edges_; }
-    const State& get_current_state() const { return current_state_; }
-    const std::optional<State>& get_target_state() const { return target_state_; }
-    const std::shared_ptr<Walker>& get_transition_walker() const { return transition_walker_; }
-    size_t get_consumed_character_count() const { return consumed_character_count_; }
-    const std::optional<std::string>& get_remaining_input() const { return remaining_input_; }
+    const std::shared_ptr<Acceptor>& acceptor() const { return acceptor_; }
+    void acceptor(const std::shared_ptr<Acceptor>& value) { acceptor_ = value; }
+
+    const std::vector<std::shared_ptr<Walker>>& accepted_history() const { return accepted_history_; }
+    void accepted_history(const std::vector<std::shared_ptr<Walker>>& value) { accepted_history_ = value; }
+
+    const std::set<VisitedEdge>& explored_edges() const { return explored_edges_; }
+    void explored_edges(const std::set<VisitedEdge>& value) { explored_edges_ = value; }
+
+    const State& current_state() const { return current_state_; }
+    void current_state(const State& value) { current_state_ = value; }
+
+    const std::optional<State>& target_state() const { return target_state_; }
+    void target_state(const std::optional<State>& value) { target_state_ = value; }
+
+    const std::shared_ptr<Walker>& transition_walker() const { return transition_walker_; }
+    void transition_walker(const std::shared_ptr<Walker>& value) { transition_walker_ = value; }
+
+    size_t consumed_character_count() const { return consumed_character_count_; }
+    void consumed_character_count(size_t value) { consumed_character_count_ = value; }
+
+    const std::optional<std::string>& remaining_input() const { return remaining_input_; }
+    void remaining_input(const std::optional<std::string>& value) { remaining_input_ = value; }
 
 protected:
-    std::shared_ptr<Acceptor> acceptor_;
-    std::vector<std::shared_ptr<Walker>> accepted_history_;
-    std::set<VisitedEdge> explored_edges_;
-
-    State current_state_;
-    std::optional<State> target_state_;
-    std::shared_ptr<Walker> transition_walker_;
-
-    size_t consumed_character_count_;
-    std::optional<std::string> remaining_input_;
-
     std::optional<std::string> _raw_value_;
     bool _accepts_more_input_;
 

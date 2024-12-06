@@ -15,7 +15,8 @@
  * different valid states, enabling efficient traversal and minimizing
  * backtracking.
  */
-class Acceptor {
+class Acceptor
+{
 public:
   using State = std::variant<int, std::string>;
   using Edge = std::pair<std::shared_ptr<Acceptor>, State>;
@@ -32,8 +33,8 @@ public:
    * @param is_optional Whether the acceptor is optional
    * @param is_case_sensitive Whether the acceptor is case sensitive
    */
-  Acceptor(std::shared_ptr<StateGraph> state_graph = nullptr,
-           State start_state = 0, std::vector<State> end_states = {"$"},
+  Acceptor(StateGraph&& state_graph = StateGraph(),
+           State start_state = 0, std::vector<State>&& end_states = {"$"},
            bool is_optional = false, bool is_case_sensitive = true);
 
   virtual ~Acceptor() = default;
@@ -105,15 +106,17 @@ public:
    * @brief Get the end states of the acceptor
    * @return The end states
    */
-  const std::vector<State>& get_end_states() const { return end_states_; }
+  const std::vector<State> &get_end_states() const { return end_states_; }
 
   /**
    * @brief Convert a state to a string
    * @param state The state to convert
    * @return The string representation of the state
    */
-  static std::string state_to_string(const State& state) {
-    return std::visit([](auto&& arg) -> std::string {
+  static std::string state_to_string(const State &state)
+  {
+    return std::visit([](auto &&arg) -> std::string
+                      {
       using T = std::decay_t<decltype(arg)>;
       if constexpr (std::is_same_v<T, int>) {
         return std::to_string(arg);
@@ -121,12 +124,17 @@ public:
         return arg;
       } else {
         return "";
-      }
-    }, state);
+      } }, state);
   }
 
+  /**
+   * @brief Get the state transition graph
+   * @return The state transition graph
+   */
+  const StateGraph &get_state_graph() const { return state_graph_; }
+
 protected:
-  std::shared_ptr<StateGraph> state_graph_;
+  StateGraph state_graph_;
   State start_state_;
   std::vector<State> end_states_;
   bool is_optional_;
