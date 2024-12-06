@@ -130,29 +130,29 @@ class Acceptor(ABC):
         """
         ...
 
-    def get_start_state(self) -> State:
-        """Get the start state of the acceptor.
-
-        Returns:
-            The start state.
-        """
+    @property
+    def start_state(self) -> State:
+        """The start state of the acceptor."""
         ...
 
-    def get_end_states(self) -> list[State]:
-        """Get the end states of the acceptor.
+    @start_state.setter
+    def start_state(self, value: State) -> None: ...
 
-        Returns:
-            A list of end states.
-        """
+    @property
+    def end_states(self) -> list[State]:
+        """The end states of the acceptor."""
         ...
 
-    def get_state_graph(self) -> StateGraph:
-        """Get the state transition graph.
+    @end_states.setter
+    def end_states(self, value: list[State]) -> None: ...
 
-        Returns:
-            The state transition graph.
-        """
+    @property
+    def state_graph(self) -> StateGraph:
+        """The state transition graph."""
         ...
+
+    @state_graph.setter
+    def state_graph(self, value: StateGraph) -> None: ...
 
 class Walker(ABC):
     """
@@ -252,6 +252,17 @@ class Walker(ABC):
         """
         ...
 
+    def parse_value(self, value: str | None) -> Any:
+        """Parse the accumulated value into an appropriate type.
+
+        Args:
+            value: The value to parse.
+
+        Returns:
+            The parsed value.
+        """
+        ...
+
     def start_transition(
         self,
         transition_walker: Walker,
@@ -296,6 +307,8 @@ class Walker(ABC):
             A list of branched walker instances.
         """
         ...
+
+
 
     @property
     def current_value(self) -> Any:
@@ -388,6 +401,22 @@ class Walker(ABC):
 
     @remaining_input.setter
     def remaining_input(self, value: str | None) -> None: ...
+
+    @property
+    def _accepts_more_input(self) -> bool:
+        """Check if the walker can accept more input."""
+        ...
+
+    @_accepts_more_input.setter
+    def _accepts_more_input(self, value: bool) -> None: ...
+
+    @property
+    def _raw_value(self) -> str | None:
+        """The raw accumulated value as a string."""
+        ...
+
+    @_raw_value.setter
+    def _raw_value(self, value: str | None) -> None: ...
 
     def __eq__(self, other: object) -> bool:
         """Check equality based on the walker's state and accumulated value.

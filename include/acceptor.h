@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 /**
@@ -24,6 +25,12 @@ public:
       std::tuple<State, std::optional<State>, std::optional<std::string>>;
   using StateGraph = std::unordered_map<State, std::vector<Edge>>;
 
+  StateGraph state_graph_;
+  State start_state_;
+  std::vector<State> end_states_;
+  bool is_optional_;
+  bool is_case_sensitive_;
+
   /**
    * @brief Construct a new Acceptor
    *
@@ -39,23 +46,27 @@ public:
 
   virtual ~Acceptor() = default;
 
-  /**
-   * @brief Check if acceptor is optional
-   * @return true if optional, false otherwise
-   */
-  bool is_optional() const { return is_optional_; }
+  // Property getters and setters
+  const State& start_state() const { return start_state_; }
+  void start_state(const State& value) { start_state_ = value; }
 
-  /**
-   * @brief Check if acceptor is case sensitive
-   * @return true if case sensitive, false otherwise
-   */
+  const std::vector<State>& end_states() const { return end_states_; }
+  void end_states(const std::vector<State>& value) { end_states_ = value; }
+
+  const StateGraph& state_graph() const { return state_graph_; }
+  void state_graph(const StateGraph& value) { state_graph_ = value; }
+
+  bool is_optional() const { return is_optional_; }
+  void is_optional(bool value) { is_optional_ = value; }
+
   bool is_case_sensitive() const { return is_case_sensitive_; }
+  void is_case_sensitive(bool value) { is_case_sensitive_ = value; }
 
   /**
    * @brief Get the walker class for this acceptor
    * @return Walker class type
    */
-  virtual std::type_info const &walker_class() const = 0;
+  virtual const std::type_info& walker_class() const = 0;
 
   /**
    * @brief Get walkers to traverse the acceptor
@@ -97,18 +108,6 @@ public:
   virtual std::string repr() const;
 
   /**
-   * @brief Get the start state of the acceptor
-   * @return The start state
-   */
-  State get_start_state() const { return start_state_; }
-
-  /**
-   * @brief Get the end states of the acceptor
-   * @return The end states
-   */
-  const std::vector<State> &get_end_states() const { return end_states_; }
-
-  /**
    * @brief Convert a state to a string
    * @param state The state to convert
    * @return The string representation of the state
@@ -117,26 +116,21 @@ public:
   {
     return std::visit([](auto &&arg) -> std::string
                       {
-      using T = std::decay_t<decltype(arg)>;
-      if constexpr (std::is_same_v<T, int>) {
-        return std::to_string(arg);
-      } else if constexpr (std::is_same_v<T, std::string>) {
-        return arg;
-      } else {
-        return "";
-      } }, state);
+                        using T = std::decay_t<decltype(arg)>;
+                        if constexpr (std::is_same_v<T, int>) {
+                          return std::to_string(arg);
+                        } else if constexpr (std::is_same_v<T, std::string>) {
+                          return arg;
+                        } else {
+                          return "";
+                        }
+                      }, state);
   }
 
-  /**
-   * @brief Get the state transition graph
-   * @return The state transition graph
-   */
-  const StateGraph &get_state_graph() const { return state_graph_; }
-
-protected:
-  StateGraph state_graph_;
-  State start_state_;
-  std::vector<State> end_states_;
-  bool is_optional_;
-  bool is_case_sensitive_;
+// protected:
+//   StateGraph state_graph_;
+//   State start_state_;
+//   std::vector<State> end_states_;
+//   bool is_optional_;
+//   bool is_case_sensitive_;
 };

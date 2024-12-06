@@ -37,8 +37,11 @@ NB_MODULE(_core, m)
               "state_graph"_a = Acceptor::StateGraph(), "start_state"_a = 0,
               "end_states"_a = std::vector<Acceptor::State>{"$"},
               "is_optional"_a = false, "is_case_sensitive"_a = true)
-         .def_prop_ro("is_optional", &Acceptor::is_optional)
-         .def_prop_ro("is_case_sensitive", &Acceptor::is_case_sensitive)
+         .def_rw("state_graph", &Acceptor::state_graph_)
+         .def_rw("start_state", &Acceptor::start_state_)
+         .def_rw("end_states", &Acceptor::end_states_)
+         .def_rw("is_optional", &Acceptor::is_optional_)
+         .def_rw("is_case_sensitive", &Acceptor::is_case_sensitive_)
          .def("walker_class", &Acceptor::walker_class, nb::type<Walker>())
          .def("get_walkers", &Acceptor::get_walkers, "state"_a = nb::none())
          .def("get_transitions", &Acceptor::get_transitions, "walker"_a)
@@ -60,7 +63,7 @@ NB_MODULE(_core, m)
          .def_prop_ro("raw_value", &Walker::raw_value)
          .def_prop_ro("current_edge", &Walker::current_edge)
 
-         // Read/Write properties (replacing the old getter-only versions)
+         // Read/Write properties
          .def_rw("acceptor", &Walker::acceptor_)
          .def_rw("accepted_history", &Walker::accepted_history_)
          .def_rw("explored_edges", &Walker::explored_edges_)

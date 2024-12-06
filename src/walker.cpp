@@ -12,27 +12,28 @@
 Walker::Walker(std::shared_ptr<Acceptor> acceptor,
                std::optional<State> current_state)
     : acceptor_(std::move(acceptor)),
-      current_state_(current_state.value_or(acceptor_->get_start_state())),
-      consumed_character_count_(0), _accepts_more_input_(false) {
+      current_state_(current_state.value_or(acceptor_->start_state())),
+      consumed_character_count_(0),
+      accepts_more_input_(false) {
   // Initialize other optional members
   target_state_ = std::nullopt;
   transition_walker_ = nullptr;
   remaining_input_ = std::nullopt;
-  _raw_value_ = std::nullopt;
+  raw_value_ = std::nullopt;
 }
 
 // Property-like getters
 std::any Walker::current_value() const {
   auto raw_val = raw_value();
   if (raw_val) {
-    return _parse_value(raw_val);
+    return parse_value(raw_val);
   }
   return {};
 }
 
 std::optional<std::string> Walker::raw_value() const {
-  if (_raw_value_) {
-    return _raw_value_;
+  if (raw_value_) {
+    return raw_value_;
   }
 
   if (accepted_history_.empty() && !transition_walker_) {
@@ -84,7 +85,7 @@ bool Walker::should_start_transition(const std::string &token) {
   }
 
   if (explored_edges_.count(current_edge()) > 0) {
-    _accepts_more_input_ = false;
+    accepts_more_input_ = false;
     return false;
   }
 
@@ -168,10 +169,9 @@ Walker::complete_transition(std::shared_ptr<Walker> transition_walker) {
       clone->target_state_ = std::nullopt;
     }
 
-    if (std::find(clone->acceptor_->get_end_states().begin(),
-                  clone->acceptor_->get_end_states().end(),
-                  clone->current_state_) !=
-        clone->acceptor_->get_end_states().end()) {
+    if (std::find(clone->acceptor_->end_states().begin(),
+                  clone->acceptor_->end_states().end(),
+                  clone->current_state_) != clone->acceptor_->end_states().end()) {
       return std::make_tuple(clone, true);
     }
   }
@@ -228,6 +228,39 @@ Walker::find_valid_prefixes(const tsl::htrie_set<char> &trie) {
   }
 
   return valid_prefixes;
+}
+
+// Helper function to parse value
+std::any Walker::parse_value(const std::optional<std::string> &value) const
+{
+  if (!value)
+  {
+    return {};
+  }
+
+  const std::string &val = *value;
+
+  // Try to parse as float
+  try
+  {
+    double float_value = std::stod(val);
+    if (std::floor(float_value) == float_value)
+    {
+      return static_cast<int64_t>(float_value);
+    }
+    return float_value;
+  }
+  catch (const std::exception &)
+  {
+    // Not a float
+  }
+
+  // Try to parse as JSON (requires JSON library)
+  // Here we'll assume JSON parsing is implemented elsewhere
+  // For illustration purposes, we'll skip it
+
+  // Return the original string
+  return val;
 }
 
 // Comparison operator
@@ -296,7 +329,7 @@ std::string Walker::_format_current_edge() const {
 std::string Walker::repr() const {
   // Build header with status indicators
   const std::string prefix = has_reached_accept_state() ? "✅ " : "";
-  const std::string suffix = _accepts_more_input_ ? " 🔄" : "";
+  const std::string suffix = accepts_more_input_ ? " 🔄" : "";
   const std::string header = prefix +
                              (acceptor_ ? typeid(acceptor_).name() : "null") +
                              ".Walker" + suffix;
@@ -385,31 +418,4 @@ std::string Walker::repr() const {
   }
   oss << "}";
   return oss.str();
-}
-
-// Helper function to parse value
-std::any Walker::_parse_value(const std::optional<std::string> &value) const {
-  if (!value) {
-    return {};
-  }
-
-  const std::string &val = *value;
-
-  // Try to parse as float
-  try {
-    double float_value = std::stod(val);
-    if (std::floor(float_value) == float_value) {
-      return static_cast<int64_t>(float_value);
-    }
-    return float_value;
-  } catch (const std::exception &) {
-    // Not a float
-  }
-
-  // Try to parse as JSON (requires JSON library)
-  // Here we'll assume JSON parsing is implemented elsewhere
-  // For illustration purposes, we'll skip it
-
-  // Return the original string
-  return val;
 }

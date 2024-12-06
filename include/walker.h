@@ -23,6 +23,8 @@ public:
     std::shared_ptr<Walker> transition_walker_;
     size_t consumed_character_count_;
     std::optional<std::string> remaining_input_;
+    std::optional<std::string> raw_value_;
+    bool accepts_more_input_;
 
     Walker(std::shared_ptr<Acceptor> acceptor, std::optional<State> current_state = std::nullopt);
     virtual ~Walker() = default;
@@ -40,6 +42,7 @@ public:
     virtual bool has_reached_accept_state() const;
     virtual std::set<std::string> find_valid_prefixes(const tsl::htrie_set<char>& trie);
     virtual std::shared_ptr<Walker> clone() const = 0;
+    virtual std::any parse_value(const std::optional<std::string> &value) const;
 
     // Non-virtual methods
     std::shared_ptr<Walker> start_transition(
@@ -93,11 +96,6 @@ public:
     const std::optional<std::string>& remaining_input() const { return remaining_input_; }
     void remaining_input(const std::optional<std::string>& value) { remaining_input_ = value; }
 
-protected:
-    std::optional<std::string> _raw_value_;
-    bool _accepts_more_input_;
-
 private:
-    std::any _parse_value(const std::optional<std::string>& value) const;
     std::string _format_current_edge() const;
 };
