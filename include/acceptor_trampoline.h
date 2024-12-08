@@ -4,17 +4,22 @@
 
 class PyAcceptor : public Acceptor
 {
-    NB_TRAMPOLINE(Acceptor, 8); // 8 virtual methods that can be overridden
+    NB_TRAMPOLINE(Acceptor, 5); // 5 virtual methods that can be overridden
 
-    std::type_info const &walker_class() const override
+    std::shared_ptr<Walker> get_new_walker(std::optional<State> state = std::nullopt) override
     {
-        NB_OVERRIDE_PURE(walker_class);
+        NB_OVERRIDE_PURE(get_new_walker, state);
     }
 
     std::vector<std::shared_ptr<Walker>> get_walkers(
         std::optional<State> state = std::nullopt) override
     {
         NB_OVERRIDE_PURE(get_walkers, state);
+    }
+
+    std::vector<Edge> get_edges(State state) override
+    {
+        NB_OVERRIDE_PURE(get_edges, state);
     }
 
     std::vector<std::pair<std::shared_ptr<Walker>, State>> get_transitions(

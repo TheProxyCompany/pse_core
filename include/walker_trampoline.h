@@ -5,7 +5,7 @@
 class PyWalker : public Walker {
 public:
     // NB_TRAMPOLINE macro defines the interface
-    NB_TRAMPOLINE(Walker, 8);
+    NB_TRAMPOLINE(Walker, 4);
 
     // Pure virtual methods
     std::vector<std::shared_ptr<Walker>> consume_token(const std::string& token) override {

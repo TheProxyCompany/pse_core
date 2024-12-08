@@ -6,7 +6,7 @@ project(${PY_BUILD_CMAKE_MODULE_NAME} LANGUAGES CXX)
 set(EXTENSION_NAME _core)
 
 # C++ settings
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS NO)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
@@ -73,11 +73,11 @@ install(
 )
 
 # Stub generation
-nanobind_add_stub(
-    ${PROJECT_NAME}_stub
-    INSTALL_TIME
-    MODULE ${PROJECT_NAME}.${EXTENSION_NAME}
-    OUTPUT ${PROJECT_NAME}/${EXTENSION_NAME}.pyi
-    MARKER_FILE ${PROJECT_NAME}/py.typed
-    COMPONENT python_modules
-)
+# nanobind_add_stub(
+#     ${PROJECT_NAME}_stub
+#     INSTALL_TIME
+#     MODULE ${PROJECT_NAME}.${EXTENSION_NAME}
+#     OUTPUT ${PROJECT_NAME}/${EXTENSION_NAME}.pyi
+#     MARKER_FILE ${PROJECT_NAME}/py.typed
+#     COMPONENT python_modules
+# )

@@ -21,7 +21,7 @@ NB_MODULE(_core, m)
         PSE Core C++ Bindings
         ---------------------
 
-        .. currentmodule:: pse_core
+        .. currentmodule:: _core
 
         .. autosummary::
            :toctree: _generate
@@ -42,8 +42,9 @@ NB_MODULE(_core, m)
          .def_rw("end_states", &Acceptor::end_states_)
          .def_rw("is_optional", &Acceptor::is_optional_)
          .def_rw("is_case_sensitive", &Acceptor::is_case_sensitive_)
-         .def("walker_class", &Acceptor::walker_class, nb::type<Walker>())
+         .def("get_new_walker", &Acceptor::get_new_walker, "state"_a = nb::none())
          .def("get_walkers", &Acceptor::get_walkers, "state"_a = nb::none())
+         .def("get_edges", &Acceptor::get_edges, "state"_a)
          .def("get_transitions", &Acceptor::get_transitions, "walker"_a)
          .def("advance", &Acceptor::advance, "walker"_a, "token"_a)
          .def("branch_walker", &Acceptor::branch_walker, "walker"_a,
@@ -72,6 +73,8 @@ NB_MODULE(_core, m)
          .def_rw("transition_walker", &Walker::transition_walker_)
          .def_rw("consumed_character_count", &Walker::consumed_character_count_)
          .def_rw("remaining_input", &Walker::remaining_input_)
+         .def_rw("_raw_value", &Walker::_raw_value_)
+         .def_rw("_accepts_more_input", &Walker::_accepts_more_input_)
 
          // Pure virtual methods
          .def("consume_token", &Walker::consume_token)

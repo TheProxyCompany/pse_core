@@ -8,13 +8,9 @@ constraints and transitions within the state machine.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, TypeAlias
+from typing import Any, Self
 
-# Type aliases
-State: TypeAlias = int | str
-Edge: TypeAlias = tuple[Acceptor, State]
-VisitedEdge: TypeAlias = tuple[State, State | None, str | None]
-StateGraph: TypeAlias = dict[State, list[Edge]]
+from pse_core import Edge, State, StateGraph, VisitedEdge
 
 class Acceptor(ABC):
     """
@@ -43,10 +39,9 @@ class Acceptor(ABC):
         """Check if the acceptor is case sensitive."""
         ...
 
-    @property
     @abstractmethod
-    def walker_class(self) -> type[Walker]:
-        """Get the walker class for this acceptor."""
+    def get_new_walker(self, state: State | None = None) -> Walker:
+        """Get a new walker for this acceptor."""
         ...
 
     @abstractmethod
@@ -71,6 +66,11 @@ class Acceptor(ABC):
         Returns:
             A list of tuples containing a walker and a state.
         """
+        ...
+
+    @abstractmethod
+    def get_edges(self, state: State) -> list[Edge]:
+        """Get edges from the given state."""
         ...
 
     @abstractmethod
@@ -116,18 +116,6 @@ class Acceptor(ABC):
 
     def __repr__(self) -> str:
         """Return a detailed string representation of the acceptor."""
-        ...
-
-    @staticmethod
-    def state_to_string(state: State) -> str:
-        """Convert a state to its string representation.
-
-        Args:
-            state: The state to convert.
-
-        Returns:
-            The string representation of the state.
-        """
         ...
 
     @property
@@ -198,6 +186,15 @@ class Walker(ABC):
         """
         ...
 
+    @abstractmethod
+    def clone(self) -> Self:
+        """Create a clone of the walker.
+
+        Returns:
+            A new instance of the walker with the same state.
+        """
+        ...
+
     def should_start_transition(self, token: str) -> bool:
         """Determine if a transition should start with the given input token.
 
@@ -241,14 +238,6 @@ class Walker(ABC):
 
         Returns:
             True if in an accepted state; False otherwise.
-        """
-        ...
-
-    def clone(self) -> Walker:
-        """Create a clone of the walker.
-
-        Returns:
-            A new instance of the walker with the same state.
         """
         ...
 
