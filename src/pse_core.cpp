@@ -72,7 +72,7 @@ NB_MODULE(_core, m)
          .def_rw("target_state", &Walker::target_state_)
          .def_rw("transition_walker", &Walker::transition_walker_)
          .def_rw("consumed_character_count", &Walker::consumed_character_count_)
-         .def_rw("remaining_input", &Walker::remaining_input_)
+         .def_rw("remaining_input", &Walker::remaining_input_, "remaining_input"_a = nb::none())
          .def_rw("_raw_value", &Walker::_raw_value_)
          .def_rw("_accepts_more_input", &Walker::_accepts_more_input_)
 
