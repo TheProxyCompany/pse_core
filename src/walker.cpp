@@ -1,5 +1,5 @@
 #include "walker.h"
-#include "acceptor.h"
+#include "state_machine.h"
 
 #include <algorithm>
 #include <cmath>
@@ -9,10 +9,10 @@
 #include <typeinfo>
 
 // Constructor
-Walker::Walker(std::shared_ptr<Acceptor> acceptor,
+Walker::Walker(std::shared_ptr<StateMachine> state_machine,
                std::optional<State> current_state)
-    : acceptor_(std::move(acceptor)),
-      current_state_(current_state.value_or(acceptor_->start_state())),
+    : state_machine_(std::move(state_machine)),
+      current_state_(current_state.value_or(state_machine_->start_state())),
       consumed_character_count_(0),
       _accepts_more_input_(false)
 {
@@ -199,9 +199,9 @@ Walker::complete_transition(std::shared_ptr<Walker> transition_walker)
       clone->target_state_ = std::nullopt;
     }
 
-    if (std::find(clone->acceptor_->end_states().begin(),
-                  clone->acceptor_->end_states().end(),
-                  clone->current_state_) != clone->acceptor_->end_states().end())
+    if (std::find(clone->state_machine_->end_states().begin(),
+                  clone->state_machine_->end_states().end(),
+                  clone->current_state_) != clone->state_machine_->end_states().end())
     {
       return std::make_tuple(clone, true);
     }
@@ -238,8 +238,8 @@ Walker::branch(const std::optional<std::string> &token)
     }
   }
 
-  // Extend result with acceptor's branch_walker output
-  auto branched_walkers = acceptor_->branch_walker(shared_from_this(), token);
+  // Extend result with state_machine's branch_walker output
+  auto branched_walkers = state_machine_->branch_walker(shared_from_this(), token);
   result.insert(result.end(), branched_walkers.begin(), branched_walkers.end());
   return result;
 }
@@ -336,8 +336,8 @@ bool Walker::operator==(const Walker &other) const
     return false;
   }
 
-  // Compare acceptor
-  if (acceptor_ != other.acceptor_)
+  // Compare state_machine
+  if (state_machine_ != other.state_machine_)
   {
     return false;
   }
@@ -350,7 +350,7 @@ std::string Walker::to_string() const
 {
   if (transition_walker_)
   {
-    return acceptor_->to_string() + ".Walker(" +
+    return state_machine_->to_string() + ".Walker(" +
            transition_walker_->to_string() + ")";
   }
   return repr();
@@ -363,7 +363,7 @@ std::string Walker::_format_current_edge() const
   if (target_state_)
   {
     target_state_str =
-        "--> (" + Acceptor::state_to_string(*target_state_) + ")";
+        "--> (" + StateMachine::state_to_string(*target_state_) + ")";
   }
 
   auto accumulated_value = raw_value();
@@ -373,7 +373,7 @@ std::string Walker::_format_current_edge() const
     accumulated_value_str = "--" + *accumulated_value + target_state_str;
   }
 
-  return "Current edge: (" + Acceptor::state_to_string(current_state_) + ") " +
+  return "Current edge: (" + StateMachine::state_to_string(current_state_) + ") " +
          accumulated_value_str;
 }
 
@@ -384,7 +384,7 @@ std::string Walker::repr() const
   const std::string prefix = has_reached_accept_state() ? "✅ " : "";
   const std::string suffix = _accepts_more_input_ ? " 🔄" : "";
   const std::string header = prefix +
-                             (acceptor_ ? typeid(acceptor_).name() : "null") +
+                             (state_machine_ ? typeid(state_machine_).name() : "null") +
                              ".Walker" + suffix;
 
   std::vector<std::string> info_parts;
@@ -394,10 +394,10 @@ std::string Walker::repr() const
       std::get<int>(current_state_) != 0)
   {
     std::string state_info =
-        "State: " + Acceptor::state_to_string(current_state_);
+        "State: " + StateMachine::state_to_string(current_state_);
     if (target_state_ && current_state_ != *target_state_)
     {
-      state_info += " ➔ " + Acceptor::state_to_string(*target_state_);
+      state_info += " ➔ " + StateMachine::state_to_string(*target_state_);
     }
     info_parts.push_back(state_info);
   }

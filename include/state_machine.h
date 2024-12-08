@@ -8,11 +8,11 @@
 #include <variant>
 #include <vector>
 
-class Acceptor
+class StateMachine
 {
 public:
   using State = std::variant<int, std::string>;
-  using Edge = std::pair<std::shared_ptr<Acceptor>, State>;
+  using Edge = std::pair<std::shared_ptr<StateMachine>, State>;
   using VisitedEdge = std::tuple<State, std::optional<State>, std::optional<std::string>>;
   using StateGraph = std::unordered_map<State, std::vector<Edge>>;
 
@@ -22,11 +22,11 @@ public:
   bool is_optional_;
   bool is_case_sensitive_;
 
-  Acceptor(StateGraph &&state_graph = StateGraph(),
-           State start_state = 0, std::vector<State> &&end_states = {"$"},
-           bool is_optional = false, bool is_case_sensitive = true);
+  StateMachine(StateGraph &&state_graph = StateGraph(),
+               State start_state = 0, std::vector<State> &&end_states = {"$"},
+               bool is_optional = false, bool is_case_sensitive = true);
 
-  virtual ~Acceptor() = default;
+  virtual ~StateMachine() = default;
 
   const State &start_state() const { return start_state_; }
   void start_state(const State &value) { start_state_ = value; }
@@ -50,7 +50,7 @@ public:
   virtual std::vector<std::shared_ptr<Walker>> advance(std::shared_ptr<Walker> walker, const std::string &token) = 0;
   virtual std::vector<std::shared_ptr<Walker>> branch_walker(std::shared_ptr<Walker> walker, std::optional<std::string> token = std::nullopt) = 0;
 
-  virtual bool operator==(const Acceptor &other) const;
+  virtual bool operator==(const StateMachine &other) const;
   virtual std::string to_string() const;
   virtual std::string repr() const;
 

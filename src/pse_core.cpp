@@ -1,5 +1,5 @@
-#include "acceptor.h"
-#include "acceptor_trampoline.h"
+#include "state_machine.h"
+#include "state_machine_trampoline.h"
 #include "walker.h"
 #include "walker_trampoline.h"
 #include <nanobind/nanobind.h>
@@ -26,38 +26,38 @@ NB_MODULE(_core, m)
         .. autosummary::
            :toctree: _generate
 
-           Acceptor
+           StateMachine
            Walker
     )pbdoc";
 
-     // Bind the Acceptor class with trampoline support
-     nb::class_<Acceptor, PyAcceptor>(m, "Acceptor")
-         .def(nb::init<Acceptor::StateGraph &&, Acceptor::State,
-                       std::vector<Acceptor::State> &&, bool, bool>(),
-              "state_graph"_a = Acceptor::StateGraph(), "start_state"_a = 0,
-              "end_states"_a = std::vector<Acceptor::State>{"$"},
+     // Bind the StateMachine class with trampoline support
+     nb::class_<StateMachine, PyStateMachine>(m, "StateMachine")
+         .def(nb::init<StateMachine::StateGraph &&, StateMachine::State,
+                       std::vector<StateMachine::State> &&, bool, bool>(),
+              "state_graph"_a = StateMachine::StateGraph(), "start_state"_a = 0,
+              "end_states"_a = std::vector<StateMachine::State>{"$"},
               "is_optional"_a = false, "is_case_sensitive"_a = true)
-         .def_rw("state_graph", &Acceptor::state_graph_)
-         .def_rw("start_state", &Acceptor::start_state_)
-         .def_rw("end_states", &Acceptor::end_states_)
-         .def_rw("is_optional", &Acceptor::is_optional_)
-         .def_rw("is_case_sensitive", &Acceptor::is_case_sensitive_)
-         .def("get_new_walker", &Acceptor::get_new_walker, "state"_a = nb::none())
-         .def("get_walkers", &Acceptor::get_walkers, "state"_a = nb::none())
-         .def("get_edges", &Acceptor::get_edges, "state"_a)
-         .def("get_transitions", &Acceptor::get_transitions, "walker"_a)
-         .def("advance", &Acceptor::advance, "walker"_a, "token"_a)
-         .def("branch_walker", &Acceptor::branch_walker, "walker"_a,
+         .def_rw("state_graph", &StateMachine::state_graph_)
+         .def_rw("start_state", &StateMachine::start_state_)
+         .def_rw("end_states", &StateMachine::end_states_)
+         .def_rw("is_optional", &StateMachine::is_optional_)
+         .def_rw("is_case_sensitive", &StateMachine::is_case_sensitive_)
+         .def("get_new_walker", &StateMachine::get_new_walker, "state"_a = nb::none())
+         .def("get_walkers", &StateMachine::get_walkers, "state"_a = nb::none())
+         .def("get_edges", &StateMachine::get_edges, "state"_a)
+         .def("get_transitions", &StateMachine::get_transitions, "walker"_a)
+         .def("advance", &StateMachine::advance, "walker"_a, "token"_a)
+         .def("branch_walker", &StateMachine::branch_walker, "walker"_a,
               "token"_a = nb::none())
-         .def("__eq__", &Acceptor::operator==)
-         .def("__str__", &Acceptor::to_string)
-         .def("__repr__", &Acceptor::repr);
+         .def("__eq__", &StateMachine::operator==)
+         .def("__str__", &StateMachine::to_string)
+         .def("__repr__", &StateMachine::repr);
 
      // Bind the Walker class with trampoline support
      nb::class_<Walker, PyWalker>(m, "Walker")
          .def(
-             nb::init<std::shared_ptr<Acceptor>, std::optional<Acceptor::State>>(),
-             "acceptor"_a, "current_state"_a = nb::none())
+             nb::init<std::shared_ptr<StateMachine>, std::optional<StateMachine::State>>(),
+             "state_machine"_a, "current_state"_a = nb::none())
 
          // Properties
          .def_prop_ro("current_value", &Walker::current_value, nb::any())
@@ -65,7 +65,7 @@ NB_MODULE(_core, m)
          .def_prop_ro("current_edge", &Walker::current_edge)
 
          // Read/Write properties
-         .def_rw("acceptor", &Walker::acceptor_)
+         .def_rw("state_machine", &Walker::state_machine_)
          .def_rw("accepted_history", &Walker::accepted_history_)
          .def_rw("explored_edges", &Walker::explored_edges_)
          .def_rw("current_state", &Walker::current_state_)

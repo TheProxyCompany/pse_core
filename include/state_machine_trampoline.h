@@ -1,10 +1,10 @@
 #pragma once
 #include <nanobind/trampoline.h>
-#include "acceptor.h"
+#include "state_machine.h"
 
-class PyAcceptor : public Acceptor
+class PyStateMachine : public StateMachine
 {
-    NB_TRAMPOLINE(Acceptor, 5); // 5 virtual methods that can be overridden
+    NB_TRAMPOLINE(StateMachine, 5); // 5 virtual methods that can be overridden
 
     std::shared_ptr<Walker> get_new_walker(std::optional<State> state = std::nullopt) override
     {
@@ -42,7 +42,7 @@ class PyAcceptor : public Acceptor
         NB_OVERRIDE_PURE(branch_walker, walker, token);
     }
 
-    bool operator==(const Acceptor &other) const override
+    bool operator==(const StateMachine &other) const override
     {
         NB_OVERRIDE(operator==, other);
     }

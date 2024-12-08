@@ -1,7 +1,7 @@
 """State machine walker module.
 
-This module provides the base `Walker` and `Acceptor` classes for traversing state machines during parsing
-and generation. Walkers track state transitions and maintain parsing history, while Acceptors manage the
+This module provides the base `Walker` and `StateMachine` classes for traversing state machines during parsing
+and generation. Walkers track state transitions and maintain parsing history, while StateMachines manage the
 constraints and transitions within the state machine.
 """
 
@@ -12,12 +12,9 @@ from typing import Any, Self
 
 from pse_core import Edge, State, StateGraph, VisitedEdge
 
-class Acceptor(ABC):
+class StateMachine(ABC):
     """
-    Base class for token acceptors.
-
-    An acceptor constrains the acceptable tokens at a specific point
-    during parsing or generation. It manages multiple walkers representing
+    A state machine that manages multiple walkers representing
     different valid states, enabling efficient traversal and minimizing backtracking.
     """
 
@@ -31,22 +28,22 @@ class Acceptor(ABC):
     ) -> None: ...
     @property
     def is_optional(self) -> bool:
-        """Check if the acceptor is optional."""
+        """Check if the state machine is optional."""
         ...
 
     @property
     def is_case_sensitive(self) -> bool:
-        """Check if the acceptor is case sensitive."""
+        """Check if the state machine is case sensitive."""
         ...
 
     @abstractmethod
     def get_new_walker(self, state: State | None = None) -> Walker:
-        """Get a new walker for this acceptor."""
+        """Get a new walker for this state machine."""
         ...
 
     @abstractmethod
     def get_walkers(self, state: State | None = None) -> list[Walker]:
-        """Get walkers to traverse the acceptor.
+        """Get walkers to traverse the state machine.
 
         Args:
             state: Optional starting state.
@@ -100,27 +97,27 @@ class Acceptor(ABC):
         ...
 
     def __eq__(self, other: object) -> bool:
-        """Check equality based on the acceptor's state graph.
+        """Check equality based on the state machine's state graph.
 
         Args:
             other: The object to compare with.
 
         Returns:
-            True if both acceptors are equal; False otherwise.
+            True if both state machines are equal; False otherwise.
         """
         ...
 
     def __str__(self) -> str:
-        """Return the string representation of the acceptor."""
+        """Return the string representation of the state machine."""
         ...
 
     def __repr__(self) -> str:
-        """Return a detailed string representation of the acceptor."""
+        """Return a detailed string representation of the state machine."""
         ...
 
     @property
     def start_state(self) -> State:
-        """The start state of the acceptor."""
+        """The start state of the state machine."""
         ...
 
     @start_state.setter
@@ -128,7 +125,7 @@ class Acceptor(ABC):
 
     @property
     def end_states(self) -> list[State]:
-        """The end states of the acceptor."""
+        """The end states of the state machine."""
         ...
 
     @end_states.setter
@@ -153,7 +150,7 @@ class Walker(ABC):
 
     def __init__(
         self,
-        acceptor: Acceptor,
+        state_machine: StateMachine,
         current_state: State | None = None,
     ) -> None: ...
     @abstractmethod
@@ -215,7 +212,7 @@ class Walker(ABC):
         ...
 
     def accepts_any_token(self) -> bool:
-        """Check if the acceptor accepts any token (i.e., free text).
+        """Check if the state machine accepts any token (i.e., free text).
 
         Returns:
             True if all tokens are accepted; False otherwise.
@@ -328,12 +325,12 @@ class Walker(ABC):
         ...
 
     @property
-    def acceptor(self) -> Acceptor:
-        """The acceptor associated with this walker."""
+    def state_machine(self) -> StateMachine:
+        """The state machine associated with this walker."""
         ...
 
-    @acceptor.setter
-    def acceptor(self, value: Acceptor) -> None: ...
+    @state_machine.setter
+    def state_machine(self, value: StateMachine) -> None: ...
 
     @property
     def accepted_history(self) -> list[Walker]:

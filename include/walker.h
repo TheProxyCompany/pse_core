@@ -1,6 +1,6 @@
 #pragma once
 
-#include "acceptor.h"
+#include "state_machine.h"
 #include <memory>
 #include <optional>
 #include <set>
@@ -13,10 +13,10 @@
 class Walker : public std::enable_shared_from_this<Walker>
 {
 public:
-    using State = Acceptor::State;
+    using State = StateMachine::State;
     using VisitedEdge = std::tuple<State, std::optional<State>, std::optional<std::string>>;
 
-    std::shared_ptr<Acceptor> acceptor_;
+    std::shared_ptr<StateMachine> state_machine_;
     std::vector<std::shared_ptr<Walker>> accepted_history_;
     std::set<VisitedEdge> explored_edges_;
     State current_state_;
@@ -27,7 +27,7 @@ public:
     std::optional<std::string> _raw_value_;
     bool _accepts_more_input_;
 
-    Walker(std::shared_ptr<Acceptor> acceptor, std::optional<State> current_state = std::nullopt);
+    Walker(std::shared_ptr<StateMachine> state_machine, std::optional<State> current_state = std::nullopt);
     virtual ~Walker() = default;
 
     // Pure virtual methods that must be implemented by subclasses
@@ -70,8 +70,8 @@ public:
     virtual std::string to_string() const;
     virtual std::string repr() const;
 
-    const std::shared_ptr<Acceptor> &acceptor() const { return acceptor_; }
-    void acceptor(const std::shared_ptr<Acceptor> &value) { acceptor_ = value; }
+    const std::shared_ptr<StateMachine> &state_machine() const { return state_machine_; }
+    void state_machine(const std::shared_ptr<StateMachine> &value) { state_machine_ = value; }
 
     const std::vector<std::shared_ptr<Walker>> &accepted_history() const { return accepted_history_; }
     void accepted_history(const std::vector<std::shared_ptr<Walker>> &value) { accepted_history_ = value; }
