@@ -1,6 +1,6 @@
 #pragma once
 
-#include "walker_forward_header.h"
+#include <tsl/htrie_set.h>
 #include <memory>
 #include <optional>
 #include <string>
@@ -8,7 +8,10 @@
 #include <variant>
 #include <vector>
 
-class StateMachine
+// Forward declaration
+class Walker;
+
+class StateMachine : public std::enable_shared_from_this<StateMachine>
 {
 public:
   using State = std::variant<int, std::string>;
@@ -43,16 +46,28 @@ public:
   bool is_case_sensitive() const { return is_case_sensitive_; }
   void is_case_sensitive(bool value) { is_case_sensitive_ = value; }
 
-  virtual std::shared_ptr<Walker> get_new_walker(std::optional<State> state = std::nullopt) = 0;
-  virtual std::vector<std::shared_ptr<Walker>> get_walkers(std::optional<State> state = std::nullopt) = 0;
-  virtual std::vector<Edge> get_edges(State state) = 0;
-  virtual std::vector<std::pair<std::shared_ptr<Walker>, State>> get_transitions(std::shared_ptr<Walker> walker) = 0;
-  virtual std::vector<std::shared_ptr<Walker>> advance(std::shared_ptr<Walker> walker, const std::string &token) = 0;
-  virtual std::vector<std::shared_ptr<Walker>> branch_walker(std::shared_ptr<Walker> walker, std::optional<std::string> token = std::nullopt) = 0;
+  virtual std::shared_ptr<Walker> get_new_walker(std::optional<State> state = std::nullopt);
+  virtual std::vector<std::shared_ptr<Walker>> get_walkers(std::optional<State> state = std::nullopt);
+  virtual std::vector<Edge> get_edges(State state);
+  virtual std::vector<std::tuple<std::shared_ptr<Walker>, State, State>> get_transitions(std::shared_ptr<Walker> walker, std::optional<State> state = std::nullopt);
+  virtual std::vector<std::shared_ptr<Walker>> branch_walker(std::shared_ptr<Walker> walker, std::optional<std::string> token = std::nullopt);
+  virtual std::vector<std::shared_ptr<Walker>> advance(std::shared_ptr<Walker> walker, const std::string &token);
 
   virtual bool operator==(const StateMachine &other) const;
   virtual std::string to_string() const;
   virtual std::string repr() const;
+
+  /**
+   * @brief Advance multiple walkers with a token, optionally using a vocabulary DAWG
+   * @param walkers The walkers to advance
+   * @param token The token to advance with
+   * @param vocab Optional vocabulary DAWG to validate against
+   * @return Vector of pairs containing the token and resulting walker
+   */
+  static std::vector<std::pair<std::string, std::shared_ptr<Walker>>> advance_all(
+      const std::vector<std::shared_ptr<Walker>>& walkers,
+      const std::string& token,
+      const std::shared_ptr<tsl::htrie_set<char>>& vocab = nullptr);
 
   /**
    * @brief Convert a state to a string

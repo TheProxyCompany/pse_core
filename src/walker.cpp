@@ -23,6 +23,11 @@ Walker::Walker(std::shared_ptr<StateMachine> state_machine,
   _raw_value_ = std::nullopt;
 }
 
+std::shared_ptr<Walker> Walker::clone() const
+{
+  return std::make_shared<Walker>(*this);
+}
+
 // Property-like getters
 std::any Walker::current_value() const
 {

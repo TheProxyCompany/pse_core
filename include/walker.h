@@ -30,9 +30,6 @@ public:
     Walker(std::shared_ptr<StateMachine> state_machine, std::optional<State> current_state = std::nullopt);
     virtual ~Walker() = default;
 
-    // Pure virtual methods
-    virtual std::shared_ptr<Walker> clone() const = 0;
-
     // Core token handling
     virtual std::vector<std::shared_ptr<Walker>> consume_token(const std::string &token);
     virtual bool can_accept_more_input() const;
@@ -50,6 +47,9 @@ public:
 
     // Value parsing
     virtual std::any parse_value(const std::optional<std::string> &value) const;
+
+    // Cloning
+    virtual std::shared_ptr<Walker> clone() const;
 
     // Non-virtual methods
     std::shared_ptr<Walker> start_transition(
@@ -70,7 +70,7 @@ public:
     VisitedEdge current_edge() const;
 
     // Comparison operators
-    bool operator==(const Walker &other) const;
+    virtual bool operator==(const Walker &other) const;
 
     // String representation
     virtual std::string to_string() const;

@@ -7,12 +7,11 @@ constraints and transitions within the state machine.
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from typing import Any, Self
 
 from pse_core import Edge, State, StateGraph, VisitedEdge
 
-class StateMachine(ABC):
+class StateMachine:
     """
     A state machine that manages multiple walkers representing
     different valid states, enabling efficient traversal and minimizing backtracking.
@@ -36,12 +35,10 @@ class StateMachine(ABC):
         """Check if the state machine is case sensitive."""
         ...
 
-    @abstractmethod
     def get_new_walker(self, state: State | None = None) -> Walker:
         """Get a new walker for this state machine."""
         ...
 
-    @abstractmethod
     def get_walkers(self, state: State | None = None) -> list[Walker]:
         """Get walkers to traverse the state machine.
 
@@ -53,24 +50,33 @@ class StateMachine(ABC):
         """
         ...
 
-    @abstractmethod
-    def get_transitions(self, walker: Walker) -> list[tuple[Walker, State]]:
+    def get_transitions(self, walker: Walker, state: State | None = None) -> list[tuple[Walker, State, State]]:
         """Get transitions from the given walker.
 
         Args:
             walker: Walker to get transitions from.
 
         Returns:
-            A list of tuples containing a walker and a state.
+            A list of tuples containing a walker, start state, and target state.
         """
         ...
 
-    @abstractmethod
     def get_edges(self, state: State) -> list[Edge]:
         """Get edges from the given state."""
         ...
 
-    @abstractmethod
+    def branch_walker(self, walker: Walker, token: str | None = None) -> list[Walker]:
+        """Branch the walker into multiple paths.
+
+        Args:
+            walker: Walker to branch.
+            token: Optional token to consider.
+
+        Returns:
+            A list of branched walkers.
+        """
+        ...
+
     def advance(self, walker: Walker, token: str) -> list[Walker]:
         """Advance the walker with the given input token.
 
@@ -83,17 +89,9 @@ class StateMachine(ABC):
         """
         ...
 
-    @abstractmethod
-    def branch_walker(self, walker: Walker, token: str | None = None) -> list[Walker]:
-        """Branch the walker into multiple paths.
-
-        Args:
-            walker: Walker to branch.
-            token: Optional token to consider.
-
-        Returns:
-            A list of branched walkers.
-        """
+    @staticmethod
+    def advance_all(walkers: list[Walker], token: str, vocab: Any | None = None) -> list[tuple[str, Walker]]:
+        """Advance multiple walkers with a token, optionally using a vocabulary DAWG."""
         ...
 
     def __eq__(self, other: object) -> bool:
@@ -139,7 +137,7 @@ class StateMachine(ABC):
     @state_graph.setter
     def state_graph(self, value: StateGraph) -> None: ...
 
-class Walker(ABC):
+class Walker:
     """
     Base class for state machine walkers.
 
@@ -154,7 +152,6 @@ class Walker(ABC):
         current_state: State | None = None,
     ) -> None: ...
 
-    @abstractmethod
     def clone(self) -> Self:
         """Create a clone of the walker.
 
@@ -419,4 +416,94 @@ class Walker(ABC):
 
     def __repr__(self) -> str:
         """Return a detailed string representation of the walker."""
+        ...
+
+
+class AcceptedState(Walker):
+    """Represents a walker that has reached an accepted state.
+
+    This class wraps another walker (`accepted_walker`) that has successfully
+    reached an accepted state in the state machine. It acts as a marker for
+    accepted states and provides methods to retrieve values and advance the walker.
+    """
+
+    def __init__(self, walker: Walker) -> None:
+        """Initialize the AcceptedState with the given walker.
+
+        Args:
+            walker: The walker that has reached an accepted state.
+        """
+        ...
+
+    def clone(self) -> Walker:
+        """Create a clone of the accepted walker.
+
+        Returns:
+            A new instance of the walker with the same state.
+        """
+        ...
+
+    def can_accept_more_input(self) -> bool:
+        """Check if the accepted walker can accept more input.
+
+        Returns:
+            True if the accepted walker can accept more input; False otherwise.
+        """
+        ...
+
+    def has_reached_accept_state(self) -> bool:
+        """Check if this walker is in an accepted state.
+
+        Returns:
+            Always `True` for `AcceptedState` instances.
+        """
+        ...
+
+    def is_within_value(self) -> bool:
+        """Determine if this walker is currently within a value.
+
+        Returns:
+            `False`, as accepted states are not considered to be within a value.
+        """
+        ...
+
+    def should_start_transition(self, token: str) -> bool:
+        """Determines if a transition should start with the given input string.
+
+        Args:
+            token: The input string to process.
+
+        Returns:
+            True if the transition should start; False otherwise.
+        """
+        ...
+
+    def consume_token(self, token: str) -> list[Walker]:
+        """Advance the accepted walker with the given input.
+
+        Args:
+            token: The input string to process.
+
+        Returns:
+            A list of updated walkers after advancement.
+        """
+        ...
+
+    def __eq__(self, other: object) -> bool:
+        """Check equality with another object.
+
+        Args:
+            other: The object to compare with.
+
+        Returns:
+            True if equal to the accepted walker; False otherwise.
+        """
+        ...
+
+    def __repr__(self) -> str:
+        """Return a string representation of the accepted state.
+
+        Returns:
+            A string representing the accepted state.
+        """
         ...

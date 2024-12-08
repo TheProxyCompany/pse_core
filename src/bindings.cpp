@@ -1,3 +1,4 @@
+#include "accepted_state.h"
 #include "state_machine.h"
 #include "state_machine_trampoline.h"
 #include "walker.h"
@@ -45,7 +46,7 @@ NB_MODULE(_core, m)
          .def("get_new_walker", &StateMachine::get_new_walker, "state"_a = nb::none())
          .def("get_walkers", &StateMachine::get_walkers, "state"_a = nb::none())
          .def("get_edges", &StateMachine::get_edges, "state"_a)
-         .def("get_transitions", &StateMachine::get_transitions, "walker"_a)
+         .def("get_transitions", &StateMachine::get_transitions, "walker"_a, "state"_a = nb::none())
          .def("advance", &StateMachine::advance, "walker"_a, "token"_a)
          .def("branch_walker", &StateMachine::branch_walker, "walker"_a,
               "token"_a = nb::none())
@@ -78,7 +79,7 @@ NB_MODULE(_core, m)
 
          // Pure virtual methods
          .def("clone", &Walker::clone)
-         
+
          // Virtual methods with default implementations
          .def("consume_token", &Walker::consume_token)
          .def("can_accept_more_input", &Walker::can_accept_more_input)
@@ -101,4 +102,15 @@ NB_MODULE(_core, m)
          .def("__eq__", &Walker::operator==)
          .def("__str__", &Walker::to_string)
          .def("__repr__", &Walker::repr);
+
+     nb::class_<AcceptedState, Walker>(m, "AcceptedState")
+         .def(nb::init<std::shared_ptr<Walker>>())
+         .def("clone", &AcceptedState::clone)
+         .def("can_accept_more_input", &AcceptedState::can_accept_more_input)
+         .def("has_reached_accept_state", &AcceptedState::has_reached_accept_state)
+         .def("is_within_value", &AcceptedState::is_within_value)
+         .def("should_start_transition", &AcceptedState::should_start_transition)
+         .def("consume_token", &AcceptedState::consume_token)
+         .def("__eq__", &AcceptedState::operator==)
+         .def("__repr__", &AcceptedState::repr);
 }
