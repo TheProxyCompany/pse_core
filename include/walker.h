@@ -30,19 +30,25 @@ public:
     Walker(std::shared_ptr<StateMachine> state_machine, std::optional<State> current_state = std::nullopt);
     virtual ~Walker() = default;
 
-    // Pure virtual methods that must be implemented by subclasses
-    virtual std::vector<std::shared_ptr<Walker>> consume_token(const std::string &token) = 0;
-    virtual bool can_accept_more_input() const = 0;
-    virtual bool is_within_value() const = 0;
+    // Pure virtual methods
+    virtual std::shared_ptr<Walker> clone() const = 0;
 
-    // Virtual methods with default implementations
+    // Core token handling
+    virtual std::vector<std::shared_ptr<Walker>> consume_token(const std::string &token);
+    virtual bool can_accept_more_input() const;
+    virtual bool is_within_value() const;
+
+    // Transition control
     virtual bool should_start_transition(const std::string &token);
     virtual bool should_complete_transition() const;
+    virtual bool has_reached_accept_state() const;
+
+    // Token validation and suggestions
     virtual bool accepts_any_token() const;
     virtual std::vector<std::string> get_valid_continuations(int depth = 0) const;
-    virtual bool has_reached_accept_state() const;
     virtual std::set<std::string> find_valid_prefixes(const tsl::htrie_set<char> &trie);
-    virtual std::shared_ptr<Walker> clone() const = 0;
+
+    // Value parsing
     virtual std::any parse_value(const std::optional<std::string> &value) const;
 
     // Non-virtual methods

@@ -77,18 +77,24 @@ Walker::VisitedEdge Walker::current_edge() const
   return std::make_tuple(current_state_, target_state_, raw_value());
 }
 
-// // Clone method
-// std::shared_ptr<Walker> Walker::clone() const {
-//   auto cloned_walker = std::make_shared<Walker>(*this);
-//   // Deep copy the accepted_history_ and explored_edges_
-//   cloned_walker->accepted_history_ = accepted_history_;
-//   cloned_walker->explored_edges_ = explored_edges_;
-//   return cloned_walker;
-// }
+std::vector<std::shared_ptr<Walker>> Walker::consume_token(const std::string &token) {
+  return state_machine_->advance(shared_from_this(), token);
+}
 
-// Abstract methods (to be implemented by subclasses)
-// consume_token, can_accept_more_input, is_within_value are pure virtual and
-// remain unimplemented here
+bool Walker::can_accept_more_input() const {
+  if (transition_walker_ && transition_walker_->can_accept_more_input()) {
+    return true;
+  }
+  bool has_current_edges = state_machine_->state_graph_[current_state_].size() > 0;
+  return _accepts_more_input_ || has_current_edges;
+}
+
+bool Walker::is_within_value() const {
+  if (transition_walker_) {
+    return transition_walker_->is_within_value();
+  }
+  return consumed_character_count_ > 0;
+}
 
 // Default implementations
 bool Walker::should_start_transition(const std::string &token)
@@ -116,7 +122,12 @@ bool Walker::should_complete_transition() const
   return true;
 }
 
-bool Walker::accepts_any_token() const { return false; }
+bool Walker::accepts_any_token() const {
+  if (transition_walker_) {
+    return transition_walker_->accepts_any_token();
+  }
+  return false;
+}
 
 std::vector<std::string> Walker::get_valid_continuations(int depth) const
 {

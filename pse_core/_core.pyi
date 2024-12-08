@@ -153,7 +153,16 @@ class Walker(ABC):
         state_machine: StateMachine,
         current_state: State | None = None,
     ) -> None: ...
+
     @abstractmethod
+    def clone(self) -> Self:
+        """Create a clone of the walker.
+
+        Returns:
+            A new instance of the walker with the same state.
+        """
+        ...
+
     def consume_token(self, token: str) -> list[Walker]:
         """Advance the walker with the given input token.
 
@@ -165,7 +174,6 @@ class Walker(ABC):
         """
         ...
 
-    @abstractmethod
     def can_accept_more_input(self) -> bool:
         """Indicate whether the walker can accept more input for the current state.
 
@@ -174,21 +182,11 @@ class Walker(ABC):
         """
         ...
 
-    @abstractmethod
     def is_within_value(self) -> bool:
         """Determine if the walker is currently within a value.
 
         Returns:
             True if in a value; False otherwise.
-        """
-        ...
-
-    @abstractmethod
-    def clone(self) -> Self:
-        """Create a clone of the walker.
-
-        Returns:
-            A new instance of the walker with the same state.
         """
         ...
 

@@ -8,23 +8,24 @@ public:
     NB_TRAMPOLINE(Walker, 4);
 
     // Pure virtual methods
-    std::vector<std::shared_ptr<Walker>> consume_token(const std::string& token) override {
-        NB_OVERRIDE_PURE(consume_token, token);
-    }
-
-    std::shared_ptr<Walker> clone() const override {
+    std::shared_ptr<Walker> clone() const override
+    {
         NB_OVERRIDE_PURE(clone);
     }
 
+    // Virtual methods with default implementations
+    std::vector<std::shared_ptr<Walker>> consume_token(const std::string& token) override {
+        NB_OVERRIDE(consume_token, token);
+    }
+
     bool can_accept_more_input() const override {
-        NB_OVERRIDE_PURE(can_accept_more_input);
+        NB_OVERRIDE(can_accept_more_input);
     }
 
     bool is_within_value() const override {
-        NB_OVERRIDE_PURE(is_within_value);
+        NB_OVERRIDE(is_within_value);
     }
 
-    // Virtual methods with default implementations
     bool should_start_transition(const std::string& token) override {
         NB_OVERRIDE(should_start_transition, token);
     }

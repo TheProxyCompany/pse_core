@@ -77,19 +77,18 @@ NB_MODULE(_core, m)
          .def_rw("_accepts_more_input", &Walker::_accepts_more_input_)
 
          // Pure virtual methods
+         .def("clone", &Walker::clone)
+         
+         // Virtual methods with default implementations
          .def("consume_token", &Walker::consume_token)
          .def("can_accept_more_input", &Walker::can_accept_more_input)
          .def("is_within_value", &Walker::is_within_value)
-         .def("clone", &Walker::clone)
-
-         // Virtual methods with default implementations
          .def("should_start_transition", &Walker::should_start_transition)
          .def("should_complete_transition", &Walker::should_complete_transition)
          .def("accepts_any_token", &Walker::accepts_any_token)
          .def("get_valid_continuations", &Walker::get_valid_continuations,
               "depth"_a = 0)
          .def("has_reached_accept_state", &Walker::has_reached_accept_state)
-         .def("find_valid_prefixes", &Walker::find_valid_prefixes)
 
          // Non-virtual methods
          .def("start_transition", &Walker::start_transition, "transition_walker"_a,
