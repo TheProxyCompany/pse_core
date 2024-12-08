@@ -28,7 +28,7 @@ install_components = ["python_modules"]
 source_path = "."
 
 [tool.py-build-cmake.module]
-directory = "python"
+directory = "."
 name = "pse_core"
 
 [tool.ruff.lint]
