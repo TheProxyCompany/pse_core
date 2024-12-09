@@ -67,10 +67,11 @@ public:
     std::vector<std::shared_ptr<Walker>> branch(
         const std::optional<std::string> &token = std::nullopt);
 
-    // Property-like getters
-    nb::object current_value() const;
-    std::optional<std::string> raw_value() const;
     VisitedEdge current_edge() const;
+
+    // Property-like getters
+    virtual nb::object get_current_value() const;
+    virtual std::optional<std::string> get_raw_value() const;
 
     // Comparison operators
     virtual bool operator==(const Walker &other) const;

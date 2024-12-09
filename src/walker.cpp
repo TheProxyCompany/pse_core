@@ -7,6 +7,7 @@
 #include <numeric>
 #include <sstream>
 #include <typeinfo>
+#include <nanobind/stl/string.h>
 
 namespace nb = nanobind;
 
@@ -31,17 +32,17 @@ std::shared_ptr<Walker> Walker::clone() const
 }
 
 // Property-like getters
-nb::object Walker::current_value() const
+nb::object Walker::get_current_value() const
 {
-  auto raw_val = raw_value();
+  auto raw_val = get_raw_value();
   if (raw_val)
   {
     return parse_value(raw_val);
   }
-  return {};
+  return nb::none();
 }
 
-std::optional<std::string> Walker::raw_value() const
+std::optional<std::string> Walker::get_raw_value() const
 {
   if (_raw_value_)
   {
@@ -56,7 +57,7 @@ std::optional<std::string> Walker::raw_value() const
   std::ostringstream oss;
   for (const auto &walker : accepted_history_)
   {
-    auto val = walker->raw_value();
+    auto val = walker->get_raw_value();
     if (val)
     {
       oss << *val;
@@ -64,7 +65,7 @@ std::optional<std::string> Walker::raw_value() const
   }
   if (transition_walker_)
   {
-    auto val = transition_walker_->raw_value();
+    auto val = transition_walker_->get_raw_value();
     if (val)
     {
       oss << *val;
@@ -81,23 +82,28 @@ std::optional<std::string> Walker::raw_value() const
 
 Walker::VisitedEdge Walker::current_edge() const
 {
-  return std::make_tuple(current_state_, target_state_, raw_value());
+  return std::make_tuple(current_state_, target_state_, get_raw_value());
 }
 
-std::vector<std::shared_ptr<Walker>> Walker::consume_token(const std::string &token) {
+std::vector<std::shared_ptr<Walker>> Walker::consume_token(const std::string &token)
+{
   return state_machine_->advance(shared_from_this(), token);
 }
 
-bool Walker::can_accept_more_input() const {
-  if (transition_walker_ && transition_walker_->can_accept_more_input()) {
+bool Walker::can_accept_more_input() const
+{
+  if (transition_walker_ && transition_walker_->can_accept_more_input())
+  {
     return true;
   }
   bool has_current_edges = state_machine_->state_graph_[current_state_].size() > 0;
   return _accepts_more_input_ || has_current_edges;
 }
 
-bool Walker::is_within_value() const {
-  if (transition_walker_) {
+bool Walker::is_within_value() const
+{
+  if (transition_walker_)
+  {
     return transition_walker_->is_within_value();
   }
   return consumed_character_count_ > 0;
@@ -129,8 +135,10 @@ bool Walker::should_complete_transition() const
   return true;
 }
 
-bool Walker::accepts_any_token() const {
-  if (transition_walker_) {
+bool Walker::accepts_any_token() const
+{
+  if (transition_walker_)
+  {
     return transition_walker_->accepts_any_token();
   }
   return false;
@@ -328,7 +336,7 @@ bool Walker::operator==(const Walker &other) const
   }
 
   // Compare raw value
-  if (raw_value() != other.raw_value())
+  if (get_raw_value() != other.get_raw_value())
   {
     return false;
   }
@@ -375,7 +383,7 @@ std::string Walker::_format_current_edge() const
         "--> (" + StateMachine::state_to_string(*target_state_) + ")";
   }
 
-  auto accumulated_value = raw_value();
+  auto accumulated_value = get_raw_value();
   std::string accumulated_value_str = target_state_str;
   if (accumulated_value)
   {
@@ -393,8 +401,8 @@ std::string Walker::__repr__() const
   const std::string prefix = has_reached_accept_state() ? "✅ " : "";
   const std::string suffix = _accepts_more_input_ ? " 🔄" : "";
   const std::string header = prefix +
-                             (state_machine_ ? typeid(state_machine_).name() : "null") +
-                             ".Walker" + suffix;
+                             StateMachine::get_name(state_machine_) + ".Walker" +
+                             suffix;
 
   std::vector<std::string> info_parts;
 
@@ -417,7 +425,7 @@ std::string Walker::__repr__() const
     std::vector<std::string> history_values;
     for (const auto &w : accepted_history_)
     {
-      const auto val = w->current_value();
+      const auto val = w->get_current_value();
       if (val)
       {
         try

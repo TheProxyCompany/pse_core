@@ -61,9 +61,8 @@ NB_MODULE(_core, m)
              "state_machine"_a, "current_state"_a = nb::none())
 
          // Properties
-         .def_prop_ro("current_value", &Walker::current_value)
-         .def_prop_ro("raw_value", &Walker::raw_value)
-         .def_prop_ro("current_edge", &Walker::current_edge)
+         .def("get_current_value", &Walker::get_current_value)
+         .def("get_raw_value", &Walker::get_raw_value)
 
          // Read/Write properties
          .def_rw("state_machine", &Walker::state_machine_)

@@ -289,10 +289,7 @@ class Walker:
         """
         ...
 
-
-
-    @property
-    def current_value(self) -> Any:
+    def get_current_value(self) -> Any:
         """Retrieve the accumulated walker value.
 
         Returns:
@@ -301,21 +298,11 @@ class Walker:
         """
         ...
 
-    @property
-    def raw_value(self) -> str | None:
+    def get_raw_value(self) -> str | None:
         """Retrieve the raw accumulated value as a string.
 
         Returns:
             The concatenated raw values from history and transitions.
-        """
-        ...
-
-    @property
-    def current_edge(self) -> VisitedEdge:
-        """Return the current edge as a tuple.
-
-        Returns:
-            A tuple representing the current edge.
         """
         ...
 

@@ -11,43 +11,53 @@ AcceptedState::AcceptedState(std::shared_ptr<Walker> walker)
     transition_walker_ = walker->transition_walker();
     consumed_character_count_ = walker->consumed_character_count();
     remaining_input_ = walker->remaining_input();
-    _raw_value_ = walker->raw_value();
+    _raw_value_ = walker->get_raw_value();
 }
 
-std::shared_ptr<Walker> AcceptedState::clone() const {
+std::shared_ptr<Walker> AcceptedState::clone() const
+{
     return accepted_walker_->clone();
 }
 
-bool AcceptedState::can_accept_more_input() const {
+bool AcceptedState::can_accept_more_input() const
+{
     return accepted_walker_->can_accept_more_input();
 }
 
-bool AcceptedState::has_reached_accept_state() const {
+bool AcceptedState::has_reached_accept_state() const
+{
     return true;
 }
 
-bool AcceptedState::is_within_value() const {
+bool AcceptedState::is_within_value() const
+{
     return false;
 }
 
-bool AcceptedState::should_start_transition(const std::string& token) {
-    if (!can_accept_more_input()) {
+bool AcceptedState::should_start_transition(const std::string &token)
+{
+    if (!can_accept_more_input())
+    {
         return false;
     }
     return accepted_walker_->should_start_transition(token);
 }
 
-std::vector<std::shared_ptr<Walker>> AcceptedState::consume_token(const std::string& token) {
-    if (!can_accept_more_input()) {
+std::vector<std::shared_ptr<Walker>> AcceptedState::consume_token(const std::string &token)
+{
+    if (!can_accept_more_input())
+    {
         return {};
     }
     return accepted_walker_->consume_token(token);
 }
 
-bool AcceptedState::operator==(const Walker &other) const {
+bool AcceptedState::operator==(const Walker &other) const
+{
     return *accepted_walker_ == other;
 }
 
-std::string AcceptedState::__repr__() const {
+std::string AcceptedState::__repr__() const
+{
     return "✅ " + accepted_walker_->__repr__();
 }

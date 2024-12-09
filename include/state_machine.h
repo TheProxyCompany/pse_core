@@ -87,4 +87,9 @@ public:
                           return "";
                         } }, state);
   }
+
+  static std::string get_name(const std::shared_ptr<StateMachine> &state_machine)
+  {
+    return state_machine ? std::string(typeid(*state_machine).name()).substr(std::string(typeid(*state_machine).name()).find_first_not_of("0123456789")) : "null";
+  }
 };
