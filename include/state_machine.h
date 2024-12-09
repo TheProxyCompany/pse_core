@@ -55,7 +55,7 @@ public:
 
   virtual bool operator==(const StateMachine &other) const;
   virtual std::string to_string() const;
-  virtual std::string repr() const;
+  virtual std::string __repr__() const;
 
   /**
    * @brief Advance multiple walkers with a token, optionally using a vocabulary DAWG

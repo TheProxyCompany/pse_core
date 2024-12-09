@@ -214,10 +214,10 @@ bool StateMachine::operator==(const StateMachine &other) const
 
 std::string StateMachine::to_string() const
 {
-    return this->repr();
+    return this->__repr__();
 }
 
-std::string StateMachine::repr() const
+std::string StateMachine::__repr__() const
 {
     std::string result = "Acceptor";
 
@@ -249,7 +249,7 @@ std::string StateMachine::repr() const
             }
             first = false;
 
-            result += "(" + acceptor->repr() + ", ";
+            result += "(" + acceptor->__repr__() + ", ";
             result += std::visit([](auto &&arg) -> std::string
                                  {
                 using T = std::decay_t<decltype(arg)>;

@@ -5,7 +5,7 @@
 class PyWalker : public Walker {
 public:
     // NB_TRAMPOLINE macro defines the interface
-    NB_TRAMPOLINE(Walker, 8);
+    NB_TRAMPOLINE(Walker, 9);
 
     // Pure virtual methods
     std::shared_ptr<Walker> clone() const override

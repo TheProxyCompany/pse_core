@@ -71,13 +71,3 @@ install(
     DESTINATION ${PROJECT_NAME}
     COMPONENT python_modules
 )
-
-# Stub generation
-# nanobind_add_stub(
-#     ${PROJECT_NAME}_stub
-#     INSTALL_TIME
-#     MODULE ${PROJECT_NAME}.${EXTENSION_NAME}
-#     OUTPUT ${PROJECT_NAME}/${EXTENSION_NAME}.pyi
-#     MARKER_FILE ${PROJECT_NAME}/py.typed
-#     COMPONENT python_modules
-# )

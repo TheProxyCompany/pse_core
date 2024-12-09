@@ -8,6 +8,8 @@
 #include <sstream>
 #include <typeinfo>
 
+namespace nb = nanobind;
+
 // Constructor
 Walker::Walker(std::shared_ptr<StateMachine> state_machine,
                std::optional<State> current_state)
@@ -29,7 +31,7 @@ std::shared_ptr<Walker> Walker::clone() const
 }
 
 // Property-like getters
-std::any Walker::current_value() const
+nb::object Walker::current_value() const
 {
   auto raw_val = raw_value();
   if (raw_val)
@@ -287,7 +289,7 @@ Walker::find_valid_prefixes(const tsl::htrie_set<char> &trie)
 }
 
 // Helper function to parse value
-std::any Walker::parse_value(const std::optional<std::string> &value) const
+nb::object Walker::parse_value(const std::optional<std::string> &value) const
 {
   if (!value)
   {
@@ -300,23 +302,14 @@ std::any Walker::parse_value(const std::optional<std::string> &value) const
   try
   {
     double float_value = std::stod(val);
-    if (std::floor(float_value) == float_value)
-    {
-      return static_cast<int64_t>(float_value);
-    }
-    return float_value;
+    return nb::cast(float_value);
   }
   catch (const std::exception &)
   {
     // Not a float
   }
 
-  // Try to parse as JSON (requires JSON library)
-  // Here we'll assume JSON parsing is implemented elsewhere
-  // For illustration purposes, we'll skip it
-
-  // Return the original string
-  return val;
+  return nb::cast(val);
 }
 
 // Comparison operator
@@ -369,7 +362,7 @@ std::string Walker::to_string() const
     return state_machine_->to_string() + ".Walker(" +
            transition_walker_->to_string() + ")";
   }
-  return repr();
+  return __repr__();
 }
 
 // Helper method to format current edge
@@ -394,7 +387,7 @@ std::string Walker::_format_current_edge() const
 }
 
 // Representation method
-std::string Walker::repr() const
+std::string Walker::__repr__() const
 {
   // Build header with status indicators
   const std::string prefix = has_reached_accept_state() ? "✅ " : "";
@@ -425,11 +418,11 @@ std::string Walker::repr() const
     for (const auto &w : accepted_history_)
     {
       const auto val = w->current_value();
-      if (val.has_value())
+      if (val)
       {
         try
         {
-          const std::string str_val = std::any_cast<std::string>(val);
+          std::string str_val = nb::cast<std::string>(val);
           history_values.push_back(str_val);
         }
         catch (const std::bad_any_cast &)
@@ -463,7 +456,7 @@ std::string Walker::repr() const
   // Format transition info
   if (transition_walker_)
   {
-    std::string transition_repr = transition_walker_->repr();
+    std::string transition_repr = transition_walker_->__repr__();
     if (transition_repr.find('\n') == std::string::npos &&
         transition_repr.length() < 40)
     {

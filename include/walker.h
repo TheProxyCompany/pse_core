@@ -1,6 +1,7 @@
 #pragma once
 
 #include "state_machine.h"
+#include <nanobind/nanobind.h>
 #include <memory>
 #include <optional>
 #include <set>
@@ -9,6 +10,8 @@
 #include <tuple>
 #include <vector>
 #include <any>
+
+namespace nb = nanobind;
 
 class Walker : public std::enable_shared_from_this<Walker>
 {
@@ -46,7 +49,7 @@ public:
     virtual std::set<std::string> find_valid_prefixes(const tsl::htrie_set<char> &trie);
 
     // Value parsing
-    virtual std::any parse_value(const std::optional<std::string> &value) const;
+    virtual nb::object parse_value(const std::optional<std::string> &value) const;
 
     // Cloning
     virtual std::shared_ptr<Walker> clone() const;
@@ -65,7 +68,7 @@ public:
         const std::optional<std::string> &token = std::nullopt);
 
     // Property-like getters
-    std::any current_value() const;
+    nb::object current_value() const;
     std::optional<std::string> raw_value() const;
     VisitedEdge current_edge() const;
 
@@ -74,7 +77,7 @@ public:
 
     // String representation
     virtual std::string to_string() const;
-    virtual std::string repr() const;
+    virtual std::string __repr__() const;
 
     const std::shared_ptr<StateMachine> &state_machine() const { return state_machine_; }
     void state_machine(const std::shared_ptr<StateMachine> &value) { state_machine_ = value; }

@@ -4,7 +4,7 @@
 
 class PyStateMachine : public StateMachine
 {
-    NB_TRAMPOLINE(StateMachine, 7);
+    NB_TRAMPOLINE(StateMachine, 9);
 
     std::shared_ptr<Walker> get_new_walker(std::optional<State> state = std::nullopt) override
     {
@@ -53,8 +53,8 @@ class PyStateMachine : public StateMachine
         NB_OVERRIDE(to_string);
     }
 
-    std::string repr() const override
+    std::string __repr__() const override
     {
-        NB_OVERRIDE(repr);
+        NB_OVERRIDE(__repr__);
     }
 };

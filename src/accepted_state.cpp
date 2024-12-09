@@ -48,6 +48,6 @@ bool AcceptedState::operator==(const Walker &other) const {
     return *accepted_walker_ == other;
 }
 
-std::string AcceptedState::repr() const {
-    return "✅ " + accepted_walker_->repr();
+std::string AcceptedState::__repr__() const {
+    return "✅ " + accepted_walker_->__repr__();
 }

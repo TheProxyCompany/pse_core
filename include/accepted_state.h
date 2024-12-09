@@ -32,7 +32,7 @@ public:
     bool operator==(const Walker &other) const override;
 
     // Override string representation
-    std::string repr() const override;
+    std::string __repr__() const override;
 
 private:
     std::shared_ptr<Walker> accepted_walker_;

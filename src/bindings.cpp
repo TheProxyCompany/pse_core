@@ -52,7 +52,7 @@ NB_MODULE(_core, m)
               "token"_a = nb::none())
          .def("__eq__", &StateMachine::operator==)
          .def("__str__", &StateMachine::to_string)
-         .def("__repr__", &StateMachine::repr);
+         .def("__repr__", &StateMachine::__repr__);
 
      // Bind the Walker class with trampoline support
      nb::class_<Walker, PyWalker>(m, "Walker")
@@ -61,7 +61,7 @@ NB_MODULE(_core, m)
              "state_machine"_a, "current_state"_a = nb::none())
 
          // Properties
-         .def_prop_ro("current_value", &Walker::current_value, nb::any())
+         .def_prop_ro("current_value", &Walker::current_value)
          .def_prop_ro("raw_value", &Walker::raw_value)
          .def_prop_ro("current_edge", &Walker::current_edge)
 
@@ -101,7 +101,7 @@ NB_MODULE(_core, m)
          // Special methods
          .def("__eq__", &Walker::operator==)
          .def("__str__", &Walker::to_string)
-         .def("__repr__", &Walker::repr);
+         .def("__repr__", &Walker::__repr__);
 
      nb::class_<AcceptedState, Walker>(m, "AcceptedState")
          .def(nb::init<std::shared_ptr<Walker>>())
@@ -112,5 +112,5 @@ NB_MODULE(_core, m)
          .def("should_start_transition", &AcceptedState::should_start_transition)
          .def("consume_token", &AcceptedState::consume_token)
          .def("__eq__", &AcceptedState::operator==)
-         .def("__repr__", &AcceptedState::repr);
+         .def("__repr__", &AcceptedState::__repr__);
 }
