@@ -6,15 +6,15 @@ class PyWalker : public Walker
 {
 public:
     // NB_TRAMPOLINE macro defines the interface
-    NB_TRAMPOLINE(Walker, 9);
+    NB_TRAMPOLINE(Walker, 12);
 
     // Pure virtual methods
-    std::shared_ptr<Walker> clone() const override
+    nb::ref<Walker> clone() const override
     {
         NB_OVERRIDE(clone);
     }
 
-    std::vector<std::shared_ptr<Walker>> consume_token(const std::string &token) override
+    std::vector<nb::ref<Walker>> consume_token(const std::string &token) const override
     {
         NB_OVERRIDE(consume_token, token);
     }
@@ -39,28 +39,33 @@ public:
         NB_OVERRIDE(should_complete_transition);
     }
 
+    bool has_reached_accept_state() const override
+    {
+        NB_OVERRIDE(has_reached_accept_state);
+    }
+
     bool accepts_any_token() const override
     {
         NB_OVERRIDE(accepts_any_token);
     }
 
-    nb::object get_current_value() const override
-    {
-        NB_OVERRIDE(get_current_value);
-    }
-
-    std::optional<std::string> get_raw_value() const override
-    {
-        NB_OVERRIDE(get_raw_value);
-    }
-
-    std::vector<std::string> get_valid_continuations(int depth) const override
+    std::vector<std::string> get_valid_continuations(int depth = 0) const override
     {
         NB_OVERRIDE(get_valid_continuations, depth);
     }
 
-    bool has_reached_accept_state() const override
+    std::set<std::string> find_valid_prefixes(const tsl::htrie_set<char> &trie) override
     {
-        NB_OVERRIDE(has_reached_accept_state);
+        NB_OVERRIDE(find_valid_prefixes, trie);
+    }
+
+    nb::object parse_value(const std::optional<std::string> &value) const override
+    {
+        NB_OVERRIDE(parse_value, value);
+    }
+
+    nb::object get_current_value() const override
+    {
+        NB_OVERRIDE(get_current_value);
     }
 };

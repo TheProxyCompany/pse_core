@@ -1,21 +1,25 @@
 #pragma once
 
 #include <tsl/htrie_set.h>
-#include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <variant>
 #include <vector>
 
+#include <nanobind/intrusive/counter.h>
+#include <nanobind/intrusive/ref.h>
+
 // Forward declaration
 class Walker;
 
-class StateMachine : public std::enable_shared_from_this<StateMachine>
+namespace nb = nanobind;
+
+class StateMachine : public nb::intrusive_base
 {
 public:
   using State = std::variant<int, std::string>;
-  using Edge = std::pair<std::shared_ptr<StateMachine>, State>;
+  using Edge = std::pair<nb::ref<StateMachine>, State>;
   using VisitedEdge = std::tuple<State, std::optional<State>, std::optional<std::string>>;
   using StateGraph = std::unordered_map<State, std::vector<Edge>>;
 
@@ -46,12 +50,12 @@ public:
   bool is_case_sensitive() const { return is_case_sensitive_; }
   void is_case_sensitive(bool value) { is_case_sensitive_ = value; }
 
-  virtual std::shared_ptr<Walker> get_new_walker(std::optional<State> state = std::nullopt);
-  virtual std::vector<std::shared_ptr<Walker>> get_walkers(std::optional<State> state = std::nullopt);
-  virtual std::vector<Edge> get_edges(State state);
-  virtual std::vector<std::tuple<std::shared_ptr<Walker>, State, State>> get_transitions(std::shared_ptr<Walker> walker, std::optional<State> state = std::nullopt);
-  virtual std::vector<std::shared_ptr<Walker>> branch_walker(std::shared_ptr<Walker> walker, std::optional<std::string> token = std::nullopt);
-  virtual std::vector<std::shared_ptr<Walker>> advance(std::shared_ptr<Walker> walker, const std::string &token);
+  virtual nb::ref<Walker> get_new_walker(std::optional<State> state = std::nullopt);
+  virtual std::vector<nb::ref<Walker>> get_walkers(std::optional<State> state = std::nullopt);
+  virtual std::vector<Edge> get_edges(State state) const;
+  virtual std::vector<std::tuple<nb::ref<Walker>, State, State>> get_transitions(nb::ref<Walker> walker, std::optional<State> state = std::nullopt) const;
+  virtual std::vector<nb::ref<Walker>> branch_walker(nb::ref<Walker> walker, std::optional<std::string> token = std::nullopt) const;
+  virtual std::vector<nb::ref<Walker>> advance(nb::ref<Walker> walker, const std::string &token) const;
 
   virtual bool operator==(const StateMachine &other) const;
   virtual std::string to_string() const;
@@ -64,10 +68,10 @@ public:
    * @param vocab Optional vocabulary DAWG to validate against
    * @return Vector of pairs containing the token and resulting walker
    */
-  static std::vector<std::pair<std::string, std::shared_ptr<Walker>>> advance_all(
-      const std::vector<std::shared_ptr<Walker>>& walkers,
-      const std::string& token,
-      const std::shared_ptr<tsl::htrie_set<char>>& vocab = nullptr);
+  static std::vector<std::pair<std::string, nb::ref<Walker>>> advance_all(
+      const std::vector<nb::ref<Walker>> &walkers,
+      const std::string &token,
+      const std::shared_ptr<tsl::htrie_set<char>> &vocab = nullptr);
 
   /**
    * @brief Convert a state to a string
@@ -88,8 +92,14 @@ public:
                         } }, state);
   }
 
-  static std::string get_name(const std::shared_ptr<StateMachine> &state_machine)
+  static std::string get_name(const nb::ref<StateMachine> &state_machine)
   {
-    return state_machine ? std::string(typeid(*state_machine).name()).substr(std::string(typeid(*state_machine).name()).find_first_not_of("0123456789")) : "null";
+    if (!state_machine.operator->())
+      return "null";
+
+    auto *ptr = state_machine.operator->();
+    std::string name = typeid(*ptr).name();
+    auto offset = name.find_first_not_of("0123456789");
+    return name.substr(offset);
   }
 };

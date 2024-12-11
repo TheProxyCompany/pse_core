@@ -1,6 +1,43 @@
 #include "accepted_state.h"
 
-AcceptedState::AcceptedState(std::shared_ptr<Walker> walker)
+namespace nb = nanobind;
+
+extern "C"
+{
+    int acceptedstate_tp_traverse(PyObject *self, visitproc visit, void *arg)
+    {
+        AcceptedState *as = nb::inst_ptr<AcceptedState>(self);
+        Py_VISIT(as->accepted_walker_.get());
+        Walker *w = (Walker *)as;
+        Py_VISIT(w->state_machine_.get());
+        for (auto &aw : w->accepted_history_)
+        {
+            Py_VISIT(aw.get());
+        }
+        if (w->transition_walker_)
+        {
+            Py_VISIT(w->transition_walker_.get());
+        }
+
+        return 0;
+    }
+
+    int acceptedstate_tp_clear(PyObject *self)
+    {
+        AcceptedState *as = nb::inst_ptr<AcceptedState>(self);
+        as->accepted_walker_ = nullptr;
+
+        // also clear walker references:
+        Walker *w = (Walker *)as;
+        w->state_machine_ = nullptr;
+        w->accepted_history_.clear();
+        w->transition_walker_ = nullptr;
+
+        return 0;
+    }
+}
+
+AcceptedState::AcceptedState(nb::ref<Walker> walker)
     : Walker(walker->state_machine(), walker->current_state())
 {
     accepted_walker_ = walker;
@@ -14,7 +51,7 @@ AcceptedState::AcceptedState(std::shared_ptr<Walker> walker)
     _raw_value_ = walker->get_raw_value();
 }
 
-std::shared_ptr<Walker> AcceptedState::clone() const
+nb::ref<Walker> AcceptedState::clone() const
 {
     return accepted_walker_->clone();
 }
@@ -43,7 +80,7 @@ bool AcceptedState::should_start_transition(const std::string &token)
     return accepted_walker_->should_start_transition(token);
 }
 
-std::vector<std::shared_ptr<Walker>> AcceptedState::consume_token(const std::string &token)
+std::vector<nb::ref<Walker>> AcceptedState::consume_token(const std::string &token) const
 {
     if (!can_accept_more_input())
     {

@@ -3,32 +3,59 @@
 
 #include <algorithm>
 #include <cmath>
-#include <memory>
 #include <numeric>
 #include <sstream>
 #include <typeinfo>
 #include <nanobind/stl/string.h>
+#include <nanobind/intrusive/ref.h>
+#include <Python.h>
 
 namespace nb = nanobind;
 
+extern "C"
+{
+  int walker_tp_traverse(PyObject *self, visitproc visit, void *arg)
+  {
+    Walker *w = nb::inst_ptr<Walker>(self);
+    Py_VISIT(w->state_machine_.get());
+    for (auto &aw : w->accepted_history_)
+    {
+      Py_VISIT(aw.get());
+    }
+    if (w->transition_walker_)
+    {
+      Py_VISIT(w->transition_walker_.get());
+    }
+    return 0;
+  }
+
+  int walker_tp_clear(PyObject *self)
+  {
+    Walker *w = nb::inst_ptr<Walker>(self);
+    w->state_machine_ = nullptr;
+    w->accepted_history_.clear();
+    w->transition_walker_ = nullptr;
+    return 0;
+  }
+}
+
 // Constructor
-Walker::Walker(std::shared_ptr<StateMachine> state_machine,
+Walker::Walker(nb::ref<StateMachine> state_machine,
                std::optional<State> current_state)
-    : state_machine_(std::move(state_machine)),
+    : state_machine_(state_machine),
       current_state_(current_state.value_or(state_machine_->start_state())),
       consumed_character_count_(0),
       _accepts_more_input_(false)
 {
-  // Initialize other optional members
   target_state_ = std::nullopt;
   transition_walker_ = nullptr;
   remaining_input_ = std::nullopt;
   _raw_value_ = std::nullopt;
 }
 
-std::shared_ptr<Walker> Walker::clone() const
+nb::ref<Walker> Walker::clone() const
 {
-  return std::make_shared<Walker>(*this);
+  return nb::ref<Walker>(new Walker(*this));
 }
 
 // Property-like getters
@@ -85,9 +112,9 @@ Walker::VisitedEdge Walker::current_edge() const
   return std::make_tuple(current_state_, target_state_, get_raw_value());
 }
 
-std::vector<std::shared_ptr<Walker>> Walker::consume_token(const std::string &token)
+std::vector<nb::ref<Walker>> Walker::consume_token(const std::string &token) const
 {
-  return state_machine_->advance(shared_from_this(), token);
+  return state_machine_->advance(nb::ref<Walker>((Walker *)this), token);
 }
 
 bool Walker::can_accept_more_input() const
@@ -96,7 +123,7 @@ bool Walker::can_accept_more_input() const
   {
     return true;
   }
-  bool has_current_edges = state_machine_->state_graph_[current_state_].size() > 0;
+  bool has_current_edges = state_machine_->state_graph().at(current_state_).size() > 0;
   return _accepts_more_input_ || has_current_edges;
 }
 
@@ -155,9 +182,8 @@ std::vector<std::string> Walker::get_valid_continuations(int depth) const
 
 bool Walker::has_reached_accept_state() const { return false; }
 
-// Start transition
-std::shared_ptr<Walker>
-Walker::start_transition(std::shared_ptr<Walker> transition_walker,
+nb::ref<Walker>
+Walker::start_transition(nb::ref<Walker> transition_walker,
                          const std::optional<std::string> &token,
                          std::optional<State> start_state,
                          std::optional<State> target_state)
@@ -183,16 +209,16 @@ Walker::start_transition(std::shared_ptr<Walker> transition_walker,
     clone->accepted_history_.push_back(clone->transition_walker_);
   }
 
-  clone->transition_walker_ = std::move(transition_walker);
+  clone->transition_walker_ = transition_walker;
   return clone;
 }
 
 // Complete transition
-std::tuple<std::shared_ptr<Walker>, bool>
-Walker::complete_transition(std::shared_ptr<Walker> transition_walker)
+std::tuple<nb::ref<Walker>, bool>
+Walker::complete_transition(nb::ref<Walker> transition_walker)
 {
   auto clone = this->clone();
-  clone->transition_walker_ = std::move(transition_walker);
+  clone->transition_walker_ = transition_walker;
 
   clone->remaining_input_ = clone->transition_walker_->remaining_input_;
   clone->transition_walker_->remaining_input_ = std::nullopt;
@@ -237,20 +263,20 @@ Walker::complete_transition(std::shared_ptr<Walker> transition_walker)
 }
 
 // Branch method
-std::vector<std::shared_ptr<Walker>>
-Walker::branch(const std::optional<std::string> &token)
+std::vector<nb::ref<Walker>>
+Walker::branch(const std::optional<std::string> &token) const
 {
-  std::vector<std::shared_ptr<Walker>> result;
+  std::vector<nb::ref<Walker>> result;
 
   if (transition_walker_)
   {
-    std::vector<std::shared_ptr<Walker>> transition_walkers;
+    std::vector<nb::ref<Walker>> transition_walkers;
     if (transition_walker_->can_accept_more_input())
     {
       transition_walkers = transition_walker_->branch(token);
     }
 
-    for (const auto &new_transition_walker : transition_walkers)
+    for (auto &new_transition_walker : transition_walkers)
     {
       auto clone = this->clone();
       clone->transition_walker_ = new_transition_walker;
@@ -264,8 +290,7 @@ Walker::branch(const std::optional<std::string> &token)
     }
   }
 
-  // Extend result with state_machine's branch_walker output
-  auto branched_walkers = state_machine_->branch_walker(shared_from_this(), token);
+  auto branched_walkers = state_machine_->branch_walker(nb::ref<Walker>((Walker *)this), token);
   result.insert(result.end(), branched_walkers.begin(), branched_walkers.end());
   return result;
 }
@@ -397,16 +422,14 @@ std::string Walker::_format_current_edge() const
 // Representation method
 std::string Walker::__repr__() const
 {
-  // Build header with status indicators
   const std::string prefix = has_reached_accept_state() ? "✅ " : "";
   const std::string suffix = _accepts_more_input_ ? " 🔄" : "";
   const std::string header = prefix +
-                             StateMachine::get_name(state_machine_) + ".Walker" +
+                             StateMachine::get_name(state_machine()) + ".Walker" +
                              suffix;
 
   std::vector<std::string> info_parts;
 
-  // Format state info
   if (std::holds_alternative<int>(current_state_) &&
       std::get<int>(current_state_) != 0)
   {
@@ -419,11 +442,10 @@ std::string Walker::__repr__() const
     info_parts.push_back(state_info);
   }
 
-  // Format history info
   if (!accepted_history_.empty())
   {
     std::vector<std::string> history_values;
-    for (const auto &w : accepted_history_)
+    for (auto &w : accepted_history_)
     {
       const auto val = w->get_current_value();
       if (val)
@@ -433,9 +455,9 @@ std::string Walker::__repr__() const
           std::string str_val = nb::cast<std::string>(val);
           history_values.push_back(str_val);
         }
-        catch (const std::bad_any_cast &)
+        catch (...)
         {
-          // Handle other types if needed
+          // skip non-string
         }
       }
     }
@@ -452,16 +474,13 @@ std::string Walker::__repr__() const
     }
   }
 
-  // Add current edge
   info_parts.push_back(_format_current_edge());
 
-  // Format remaining input
   if (remaining_input_)
   {
     info_parts.push_back("Remaining input: " + *remaining_input_);
   }
 
-  // Format transition info
   if (transition_walker_)
   {
     std::string transition_repr = transition_walker_->__repr__();
@@ -484,7 +503,6 @@ std::string Walker::__repr__() const
     }
   }
 
-  // Build the final output
   std::string single_line =
       header + " (" +
       std::accumulate(info_parts.begin(), info_parts.end(), std::string(),
@@ -498,10 +516,9 @@ std::string Walker::__repr__() const
     return single_line;
   }
 
-  // Multiline output
   std::ostringstream oss;
   oss << header << " {\n";
-  for (const auto &part : info_parts)
+  for (auto &part : info_parts)
   {
     oss << "  " << part << "\n";
   }
