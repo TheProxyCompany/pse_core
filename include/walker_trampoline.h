@@ -9,12 +9,12 @@ public:
     NB_TRAMPOLINE(Walker, 12);
 
     // Pure virtual methods
-    nb::ref<Walker> clone() const override
+    Walker clone() const override
     {
         NB_OVERRIDE(clone);
     }
 
-    std::vector<nb::ref<Walker>> consume_token(const std::string &token) const override
+    std::vector<Walker> consume_token(const std::string &token) const override
     {
         NB_OVERRIDE(consume_token, token);
     }

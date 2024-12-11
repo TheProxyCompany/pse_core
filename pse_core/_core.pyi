@@ -25,6 +25,8 @@ class StateMachine:
         is_optional: bool = False,
         is_case_sensitive: bool = True,
     ) -> None: ...
+
+
     @property
     def is_optional(self) -> bool:
         """Check if the state machine is optional."""

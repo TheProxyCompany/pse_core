@@ -7,6 +7,7 @@
 #include <variant>
 #include <vector>
 
+#include <nanobind/nanobind.h>
 #include <nanobind/intrusive/counter.h>
 #include <nanobind/intrusive/ref.h>
 
@@ -19,7 +20,7 @@ class StateMachine : public nb::intrusive_base
 {
 public:
   using State = std::variant<int, std::string>;
-  using Edge = std::pair<nb::ref<StateMachine>, State>;
+  using Edge = std::pair<StateMachine, State>;
   using VisitedEdge = std::tuple<State, std::optional<State>, std::optional<std::string>>;
   using StateGraph = std::unordered_map<State, std::vector<Edge>>;
 
@@ -50,12 +51,12 @@ public:
   bool is_case_sensitive() const { return is_case_sensitive_; }
   void is_case_sensitive(bool value) { is_case_sensitive_ = value; }
 
-  virtual nb::ref<Walker> get_new_walker(std::optional<State> state = std::nullopt);
-  virtual std::vector<nb::ref<Walker>> get_walkers(std::optional<State> state = std::nullopt);
+  virtual Walker get_new_walker(std::optional<State> state = std::nullopt);
+  virtual std::vector<Walker> get_walkers(std::optional<State> state = std::nullopt);
   virtual std::vector<Edge> get_edges(State state) const;
-  virtual std::vector<std::tuple<nb::ref<Walker>, State, State>> get_transitions(nb::ref<Walker> walker, std::optional<State> state = std::nullopt) const;
-  virtual std::vector<nb::ref<Walker>> branch_walker(nb::ref<Walker> walker, std::optional<std::string> token = std::nullopt) const;
-  virtual std::vector<nb::ref<Walker>> advance(nb::ref<Walker> walker, const std::string &token) const;
+  virtual std::vector<std::tuple<Walker, State, State>> get_transitions(Walker walker, std::optional<State> state = std::nullopt) const;
+  virtual std::vector<Walker> branch_walker(Walker walker, std::optional<std::string> token = std::nullopt) const;
+  virtual std::vector<Walker> advance(Walker walker, const std::string &token) const;
 
   virtual bool operator==(const StateMachine &other) const;
   virtual std::string to_string() const;
@@ -92,13 +93,9 @@ public:
                         } }, state);
   }
 
-  static std::string get_name(const nb::ref<StateMachine> &state_machine)
+  static std::string get_name(const StateMachine &state_machine)
   {
-    if (!state_machine.operator->())
-      return "null";
-
-    auto *ptr = state_machine.operator->();
-    std::string name = typeid(*ptr).name();
+    std::string name = typeid(state_machine).name();
     auto offset = name.find_first_not_of("0123456789");
     return name.substr(offset);
   }

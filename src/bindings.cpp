@@ -11,7 +11,6 @@
 #include <nanobind/stl/unordered_map.h>
 #include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
-#include <nanobind/intrusive/counter.inl>
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -23,35 +22,19 @@ static PyObject *dummy_init(PyObject *, PyObject *, PyObject *)
     return nullptr;
 }
 
-extern "C"
-{
-    int statemachine_tp_traverse(PyObject *self, visitproc visit, void *arg);
-    int statemachine_tp_clear(PyObject *self);
-    int walker_tp_traverse(PyObject *self, visitproc visit, void *arg);
-    int walker_tp_clear(PyObject *self);
-    int acceptedstate_tp_traverse(PyObject *self, visitproc visit, void *arg);
-    int acceptedstate_tp_clear(PyObject *self);
-}
-
 // define type slots for StateMachine
 static PyType_Slot state_machine_slots[] = {
     {Py_tp_init, (void *)dummy_init},
-    {Py_tp_traverse, (void *)statemachine_tp_traverse},
-    {Py_tp_clear, (void *)statemachine_tp_clear},
     {0, nullptr}};
 
 // define type slots for Walker
 static PyType_Slot walker_slots[] = {
     {Py_tp_init, (void *)dummy_init},
-    {Py_tp_traverse, (void *)walker_tp_traverse},
-    {Py_tp_clear, (void *)walker_tp_clear},
     {0, nullptr}};
 
 // define type slots for AcceptedState if it forms cycles
 static PyType_Slot acceptedstate_slots[] = {
     {Py_tp_init, (void *)dummy_init},
-    {Py_tp_traverse, (void *)acceptedstate_tp_traverse},
-    {Py_tp_clear, (void *)acceptedstate_tp_clear},
     {0, nullptr}};
 
 NB_MODULE(_core, m)
@@ -84,8 +67,6 @@ NB_MODULE(_core, m)
      // Bind the StateMachine class with trampoline support
      nb::class_<StateMachine, PyStateMachine>(
          m, "StateMachine",
-         nb::intrusive_ptr<StateMachine>([](StateMachine *o, PyObject *po) noexcept
-                                         { o->set_self_py(po); }),
          nb::type_slots(state_machine_slots))
          .def(nb::init<StateMachine::StateGraph, StateMachine::State, std::vector<StateMachine::State>, bool, bool>(),
               nb::arg("state_graph") = StateMachine::StateGraph(),
@@ -112,11 +93,9 @@ NB_MODULE(_core, m)
      // Bind the Walker class with trampoline support
      nb::class_<Walker, PyWalker>(
          m, "Walker",
-         nb::intrusive_ptr<Walker>([](Walker *o, PyObject *po) noexcept
-                                   { o->set_self_py(po); }),
          nb::type_slots(walker_slots))
          .def(
-             nb::init<nb::ref<StateMachine>, std::optional<StateMachine::State>>(),
+             nb::init<StateMachine, std::optional<StateMachine::State>>(),
              "state_machine"_a, "current_state"_a = nb::none())
 
          // Properties
@@ -161,12 +140,8 @@ NB_MODULE(_core, m)
          .def("__str__", &Walker::to_string)
          .def("__repr__", &Walker::__repr__);
 
-     nb::class_<AcceptedState, Walker>(
-         m, "AcceptedState",
-         nb::intrusive_ptr<AcceptedState>([](AcceptedState *o, PyObject *po) noexcept
-                                          { o->set_self_py(po); }),
-         nb::type_slots(acceptedstate_slots))
-         .def(nb::init<nb::ref<Walker>>())
+     nb::class_<AcceptedState, Walker>(m, "AcceptedState", nb::type_slots(acceptedstate_slots))
+         .def(nb::init<Walker>())
          .def("clone", &AcceptedState::clone)
          .def("can_accept_more_input", &AcceptedState::can_accept_more_input)
          .def("has_reached_accept_state", &AcceptedState::has_reached_accept_state)

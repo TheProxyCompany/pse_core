@@ -1,7 +1,7 @@
 from importlib import metadata
 from typing import TypeAlias
 
-from pse_core.state_machine import StateMachine
+from ._core import StateMachine  # type: ignore[attr-defined]
 
 __version__ = metadata.version(__package__ or "")
 del metadata

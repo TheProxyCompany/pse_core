@@ -20,7 +20,7 @@ public:
     using State = StateMachine::State;
     using VisitedEdge = std::tuple<State, std::optional<State>, std::optional<std::string>>;
 
-    nb::ref<StateMachine> state_machine_;
+    StateMachine state_machine_;
     std::vector<nb::ref<Walker>> accepted_history_;
     std::set<VisitedEdge> explored_edges_;
     State current_state_;
@@ -31,10 +31,10 @@ public:
     std::optional<std::string> _raw_value_;
     bool _accepts_more_input_;
 
-    Walker(nb::ref<StateMachine> state_machine, std::optional<State> current_state = std::nullopt);
+    Walker(StateMachine state_machine, std::optional<State> current_state = std::nullopt);
     virtual ~Walker() = default;
 
-    virtual std::vector<nb::ref<Walker>> consume_token(const std::string &token) const;
+    virtual std::vector<Walker> consume_token(const std::string &token) const;
     virtual bool can_accept_more_input() const;
     virtual bool is_within_value() const;
 
@@ -48,17 +48,17 @@ public:
 
     virtual nb::object parse_value(const std::optional<std::string> &value) const;
 
-    virtual nb::ref<Walker> clone() const;
+    virtual Walker clone() const;
 
-    nb::ref<Walker> start_transition(
-        nb::ref<Walker> transition_walker,
+    std::optional<Walker> start_transition(
+        Walker transition_walker,
         const std::optional<std::string> &token = std::nullopt,
         std::optional<State> start_state = std::nullopt,
         std::optional<State> target_state = std::nullopt);
 
-    std::tuple<nb::ref<Walker>, bool> complete_transition(nb::ref<Walker> transition_walker);
+    std::tuple<std::optional<Walker>, bool> complete_transition(Walker transition_walker);
 
-    std::vector<nb::ref<Walker>> branch(const std::optional<std::string> &token = std::nullopt) const;
+    std::vector<Walker> branch(const std::optional<std::string> &token = std::nullopt) const;
 
     VisitedEdge current_edge() const;
 
@@ -70,8 +70,8 @@ public:
     virtual std::string to_string() const;
     virtual std::string __repr__() const;
 
-    const nb::ref<StateMachine> &state_machine() const { return state_machine_; }
-    void state_machine(const nb::ref<StateMachine> &value) { state_machine_ = value; }
+    const StateMachine &state_machine() const { return state_machine_; }
+    void state_machine(const StateMachine &value) { state_machine_ = value; }
 
     const std::vector<nb::ref<Walker>> &accepted_history() const { return accepted_history_; }
     void accepted_history(const std::vector<nb::ref<Walker>> &value) { accepted_history_ = value; }

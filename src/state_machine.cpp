@@ -4,32 +4,9 @@
 #include <algorithm>
 #include <deque>
 #include <Python.h>
+#include <nanobind/intrusive/counter.inl>
 
 namespace nb = nanobind;
-
-extern "C" {
-    int statemachine_tp_traverse(PyObject *self, visitproc visit, void *arg) {
-        StateMachine *sm = nb::inst_ptr<StateMachine>(self);
-        // Visit all nb::ref<StateMachine> in state_graph_
-        for (auto &kv : sm->state_graph_) {
-            for (auto &edge : kv.second) {
-                Py_VISIT(edge.first.get());
-            }
-        }
-        return 0;
-    }
-
-    int statemachine_tp_clear(PyObject *self) {
-        StateMachine *sm = nb::inst_ptr<StateMachine>(self);
-        // Break cycles by clearing references
-        for (auto &kv : sm->state_graph_) {
-            for (auto &edge : kv.second) {
-                edge.first = nullptr;
-            }
-        }
-        return 0;
-    }
-}
 
 using Edge = StateMachine::Edge;
 using State = StateMachine::State;
@@ -47,12 +24,12 @@ StateMachine::StateMachine(
       is_optional_(is_optional),
       is_case_sensitive_(is_case_sensitive) {}
 
-nb::ref<Walker> StateMachine::get_new_walker(std::optional<State> state)
+Walker StateMachine::get_new_walker(std::optional<State> state)
 {
-    return nb::ref<Walker>(new Walker(nb::ref<StateMachine>(this), state));
+    return Walker(*this, state);
 }
 
-std::vector<nb::ref<Walker>> StateMachine::get_walkers(std::optional<State> state)
+std::vector<Walker> StateMachine::get_walkers(std::optional<State> state)
 {
     auto initial_walker = get_new_walker(state.value_or(start_state_));
     if (!state_graph_.empty())
@@ -67,24 +44,24 @@ std::vector<Edge> StateMachine::get_edges(State state) const
     return state_graph_.at(state);
 }
 
-std::vector<std::tuple<nb::ref<Walker>, State, State>>
-StateMachine::get_transitions(nb::ref<Walker> walker, std::optional<State> state) const
+std::vector<std::tuple<Walker, State, State>>
+StateMachine::get_transitions(Walker walker, std::optional<State> state) const
 {
-    std::vector<std::tuple<nb::ref<Walker>, State, State>> result;
+    std::vector<std::tuple<Walker, State, State>> result;
 
-    State current_state = state.value_or(walker->current_state());
+    State current_state = state.value_or(walker.current_state());
 
-    for (auto &[acceptor, target_state] : get_edges(current_state))
+    for (auto &[state_machine, target_state] : get_edges(current_state))
     {
-        auto transition_walkers = acceptor->get_walkers();
+        auto transition_walkers = state_machine.get_walkers();
         for (const auto &transition : transition_walkers)
         {
             result.emplace_back(transition, current_state, target_state);
         }
 
-        if (acceptor->is_optional() &&
+        if (state_machine.is_optional() &&
             std::find(end_states_.begin(), end_states_.end(), target_state) == end_states_.end() &&
-            walker->can_accept_more_input())
+            walker.can_accept_more_input())
         {
 
             auto next_transitions = get_transitions(walker, target_state);
@@ -95,57 +72,57 @@ StateMachine::get_transitions(nb::ref<Walker> walker, std::optional<State> state
     return result;
 }
 
-std::vector<nb::ref<Walker>> StateMachine::branch_walker(nb::ref<Walker> walker, std::optional<std::string> token) const
+std::vector<Walker> StateMachine::branch_walker(Walker walker, std::optional<std::string> token) const
 {
-    std::vector<nb::ref<Walker>> result;
-    std::optional<std::string> input_token = token.has_value() ? token : walker->remaining_input();
+    std::vector<Walker> result;
+    std::optional<std::string> input_token = token.has_value() ? token : walker.remaining_input();
 
     auto transitions = get_transitions(walker);
     for (const auto &[transition, start_state, target_state] : transitions)
     {
-        auto branched_walker = walker->start_transition(transition, input_token, start_state, target_state);
+        auto branched_walker = walker.start_transition(transition, input_token, start_state, target_state);
 
         if (branched_walker)
         {
-            result.push_back(branched_walker);
+            result.push_back(*branched_walker);
             continue;
         }
 
-        if (transition->state_machine()->is_optional() &&
+        if (transition.state_machine_.is_optional() &&
             std::find(end_states_.begin(), end_states_.end(), target_state) != end_states_.end() &&
             input_token.has_value())
         {
 
-            if (!walker->remaining_input())
+            if (!walker.remaining_input())
             {
-                walker->remaining_input(token);
+                walker.remaining_input(token);
             }
 
-            auto accepted = nb::ref<Walker>(new AcceptedState(walker));
-            result.push_back(accepted);
+            auto accepted = new AcceptedState(walker);
+            result.push_back(*accepted);
         }
     }
 
     return result;
 }
 
-std::vector<nb::ref<Walker>> StateMachine::advance(nb::ref<Walker> walker, const std::string &token) const
+std::vector<Walker> StateMachine::advance(Walker walker, const std::string &token) const
 {
-    std::vector<nb::ref<Walker>> result;
-    std::deque<std::pair<nb::ref<Walker>, std::string>> queue;
+    std::vector<Walker> result;
+    std::deque<std::pair<Walker, std::string>> queue;
     queue.push_back({walker, token});
 
-    auto handle_blocked_transition = [&](nb::ref<Walker> blocked_walker, const std::string &current_token)
+    auto handle_blocked_transition = [&](Walker blocked_walker, const std::string &current_token)
     {
-        std::vector<nb::ref<Walker>> branched_walkers;
+        std::vector<Walker> branched_walkers;
 
-        for (auto branched_walker : blocked_walker->branch(current_token))
+        for (auto branched_walker : blocked_walker.branch(current_token))
         {
-            if (branched_walker->should_start_transition(current_token))
+            if (branched_walker.should_start_transition(current_token))
             {
                 branched_walkers.push_back(branched_walker);
             }
-            else if (branched_walker->has_reached_accept_state())
+            else if (branched_walker.has_reached_accept_state())
             {
                 result.push_back(branched_walker);
                 return;
@@ -157,7 +134,7 @@ std::vector<nb::ref<Walker>> StateMachine::advance(nb::ref<Walker> walker, const
             queue.push_back({new_walker, current_token});
         }
 
-        if (branched_walkers.empty() && blocked_walker->remaining_input())
+        if (branched_walkers.empty() && blocked_walker.remaining_input())
         {
             result.push_back(blocked_walker);
         }
@@ -168,16 +145,16 @@ std::vector<nb::ref<Walker>> StateMachine::advance(nb::ref<Walker> walker, const
         auto [current_walker, current_token] = queue.front();
         queue.pop_front();
 
-        if (!current_walker->transition_walker() ||
-            !current_walker->should_start_transition(current_token))
+        if (!current_walker.transition_walker() ||
+            !current_walker.should_start_transition(current_token))
         {
             handle_blocked_transition(current_walker, current_token);
             continue;
         }
 
-        for (auto transition : current_walker->transition_walker()->consume_token(current_token))
+        for (auto transition : current_walker.transition_walker()->consume_token(current_token))
         {
-            auto [new_walker, is_accepted] = current_walker->complete_transition(transition);
+            auto [new_walker, is_accepted] = current_walker.complete_transition(transition);
 
             if (!new_walker)
             {
@@ -186,11 +163,11 @@ std::vector<nb::ref<Walker>> StateMachine::advance(nb::ref<Walker> walker, const
 
             if (new_walker->remaining_input())
             {
-                queue.push_back({new_walker, *new_walker->remaining_input()});
+                queue.push_back({*new_walker, *new_walker->remaining_input()});
             }
             else
             {
-                result.push_back(new_walker);
+                result.push_back(*new_walker);
             }
         }
     }
@@ -212,7 +189,7 @@ std::vector<std::pair<std::string, nb::ref<Walker>>> StateMachine::advance_all(
 
         for (const auto &advanced_walker : advanced_walkers)
         {
-            if (!advanced_walker->remaining_input())
+            if (!advanced_walker.remaining_input())
             {
                 results.emplace_back(token, advanced_walker);
                 continue;
@@ -223,17 +200,17 @@ std::vector<std::pair<std::string, nb::ref<Walker>>> StateMachine::advance_all(
                 continue;
             }
 
-            size_t prefix_len = token.size() - advanced_walker->remaining_input()->size();
+            size_t prefix_len = token.size() - advanced_walker.remaining_input()->size();
             std::string prefix = token.substr(0, prefix_len);
 
             if (!prefix.empty() && vocab->find(prefix) != vocab->end())
             {
-                advanced_walker->remaining_input();
+                advanced_walker.remaining_input();
 
-                if (!advanced_walker->transition_walker() &&
-                    advanced_walker->can_accept_more_input())
+                if (!advanced_walker.transition_walker() &&
+                    advanced_walker.can_accept_more_input())
                 {
-                    auto next_walkers = advanced_walker->branch();
+                    auto next_walkers = advanced_walker.branch();
                     for (const auto &next_walker : next_walkers)
                     {
                         results.emplace_back(prefix, next_walker);
@@ -284,7 +261,7 @@ std::string StateMachine::__repr__() const
                   ": [";
 
         bool first = true;
-        for (const auto &[acceptor, target_state] : transitions)
+        for (const auto &[state_machine, target_state] : transitions)
         {
             if (!first)
             {
@@ -292,7 +269,7 @@ std::string StateMachine::__repr__() const
             }
             first = false;
 
-            result += "(" + acceptor->__repr__() + ", " +
+            result += "(" + state_machine.__repr__() + ", " +
                       std::visit([](auto &&arg) -> std::string
                                  {
                           using T = std::decay_t<decltype(arg)>;

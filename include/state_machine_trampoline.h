@@ -6,12 +6,12 @@ class PyStateMachine : public StateMachine
 {
     NB_TRAMPOLINE(StateMachine, 9);
 
-    nb::ref<Walker> get_new_walker(std::optional<State> state = std::nullopt) override
+    Walker get_new_walker(std::optional<State> state = std::nullopt) override
     {
         NB_OVERRIDE(get_new_walker, state);
     }
 
-    std::vector<nb::ref<Walker>> get_walkers(std::optional<State> state = std::nullopt) override
+    std::vector<Walker> get_walkers(std::optional<State> state = std::nullopt) override
     {
         NB_OVERRIDE(get_walkers, state);
     }
@@ -21,18 +21,18 @@ class PyStateMachine : public StateMachine
         NB_OVERRIDE(get_edges, state);
     }
 
-    std::vector<std::tuple<nb::ref<Walker>, State, State>> get_transitions(
-        nb::ref<Walker> walker, std::optional<State> state = std::nullopt) const override
+    std::vector<std::tuple<Walker, State, State>> get_transitions(
+        Walker walker, std::optional<State> state = std::nullopt) const override
     {
         NB_OVERRIDE(get_transitions, walker, state);
     }
 
-    std::vector<nb::ref<Walker>> advance(nb::ref<Walker> walker, const std::string &token) const override
+    std::vector<Walker> advance(Walker walker, const std::string &token) const override
     {
         NB_OVERRIDE(advance, walker, token);
     }
 
-    std::vector<nb::ref<Walker>> branch_walker(nb::ref<Walker> walker,
+    std::vector<Walker> branch_walker(Walker walker,
                                              std::optional<std::string> token = std::nullopt) const override
     {
         NB_OVERRIDE(branch_walker, walker, token);

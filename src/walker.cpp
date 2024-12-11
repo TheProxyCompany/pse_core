@@ -12,38 +12,11 @@
 
 namespace nb = nanobind;
 
-extern "C"
-{
-  int walker_tp_traverse(PyObject *self, visitproc visit, void *arg)
-  {
-    Walker *w = nb::inst_ptr<Walker>(self);
-    Py_VISIT(w->state_machine_.get());
-    for (auto &aw : w->accepted_history_)
-    {
-      Py_VISIT(aw.get());
-    }
-    if (w->transition_walker_)
-    {
-      Py_VISIT(w->transition_walker_.get());
-    }
-    return 0;
-  }
-
-  int walker_tp_clear(PyObject *self)
-  {
-    Walker *w = nb::inst_ptr<Walker>(self);
-    w->state_machine_ = nullptr;
-    w->accepted_history_.clear();
-    w->transition_walker_ = nullptr;
-    return 0;
-  }
-}
-
 // Constructor
-Walker::Walker(nb::ref<StateMachine> state_machine,
+Walker::Walker(StateMachine state_machine,
                std::optional<State> current_state)
     : state_machine_(state_machine),
-      current_state_(current_state.value_or(state_machine_->start_state())),
+      current_state_(current_state.value_or(state_machine.start_state())),
       consumed_character_count_(0),
       _accepts_more_input_(false)
 {
@@ -53,9 +26,9 @@ Walker::Walker(nb::ref<StateMachine> state_machine,
   _raw_value_ = std::nullopt;
 }
 
-nb::ref<Walker> Walker::clone() const
+Walker Walker::clone() const
 {
-  return nb::ref<Walker>(new Walker(*this));
+  return Walker(*this);
 }
 
 // Property-like getters
@@ -112,9 +85,9 @@ Walker::VisitedEdge Walker::current_edge() const
   return std::make_tuple(current_state_, target_state_, get_raw_value());
 }
 
-std::vector<nb::ref<Walker>> Walker::consume_token(const std::string &token) const
+std::vector<Walker> Walker::consume_token(const std::string &token) const
 {
-  return state_machine_->advance(nb::ref<Walker>((Walker *)this), token);
+  return state_machine_.advance(*this, token);
 }
 
 bool Walker::can_accept_more_input() const
@@ -123,7 +96,7 @@ bool Walker::can_accept_more_input() const
   {
     return true;
   }
-  bool has_current_edges = state_machine_->state_graph().at(current_state_).size() > 0;
+  bool has_current_edges = state_machine_.state_graph().at(current_state_).size() > 0;
   return _accepts_more_input_ || has_current_edges;
 }
 
@@ -182,78 +155,78 @@ std::vector<std::string> Walker::get_valid_continuations(int depth) const
 
 bool Walker::has_reached_accept_state() const { return false; }
 
-nb::ref<Walker>
-Walker::start_transition(nb::ref<Walker> transition_walker,
+std::optional<Walker>
+Walker::start_transition(Walker transition_walker,
                          const std::optional<std::string> &token,
                          std::optional<State> start_state,
                          std::optional<State> target_state)
 {
-  if (token && !transition_walker->should_start_transition(*token))
+  if (token && !transition_walker.should_start_transition(*token))
   {
-    return nullptr;
+    return std::nullopt;
   }
 
   if (target_state_ == target_state && transition_walker_ &&
       transition_walker_->can_accept_more_input())
   {
-    return nullptr;
+    return std::nullopt;
   }
 
   auto clone = this->clone();
-  clone->current_state_ = start_state.value_or(clone->current_state_);
-  clone->target_state_ = target_state;
+  clone.current_state_ = start_state.value_or(clone.current_state_);
+  clone.target_state_ = target_state;
 
-  if (clone->transition_walker_ &&
-      clone->transition_walker_->has_reached_accept_state())
+  if (clone.transition_walker_ &&
+      clone.transition_walker_->has_reached_accept_state())
   {
-    clone->accepted_history_.push_back(clone->transition_walker_);
+    clone.accepted_history_.push_back(clone.transition_walker_);
   }
 
-  clone->transition_walker_ = transition_walker;
+  clone.transition_walker_ = &transition_walker;
   return clone;
 }
 
 // Complete transition
-std::tuple<nb::ref<Walker>, bool>
-Walker::complete_transition(nb::ref<Walker> transition_walker)
+std::tuple<std::optional<Walker>, bool>
+Walker::complete_transition(Walker transition_walker)
 {
   auto clone = this->clone();
-  clone->transition_walker_ = transition_walker;
+  clone.transition_walker_ = &transition_walker;
 
-  clone->remaining_input_ = clone->transition_walker_->remaining_input_;
-  clone->transition_walker_->remaining_input_ = std::nullopt;
+  clone.remaining_input_ = clone.transition_walker_->remaining_input_;
+  clone.transition_walker_->remaining_input_ = std::nullopt;
 
-  clone->consumed_character_count_ +=
-      clone->transition_walker_->consumed_character_count_;
-  clone->explored_edges_.insert(clone->current_edge());
+  clone.consumed_character_count_ +=
+      clone.transition_walker_->consumed_character_count_;
+  clone.explored_edges_.insert(clone.current_edge());
 
-  if (!clone->should_complete_transition())
+  if (!clone.should_complete_transition())
   {
-    if (clone->can_accept_more_input())
+    if (clone.can_accept_more_input())
     {
       return std::make_tuple(clone, false);
     }
     else
     {
-      return std::make_tuple(nullptr, false);
+      return std::make_tuple(std::nullopt, false);
     }
   }
 
-  if (clone->target_state_ &&
-      clone->transition_walker_->has_reached_accept_state())
+  if (clone.target_state_ &&
+      clone.transition_walker_->has_reached_accept_state())
   {
-    clone->current_state_ = clone->target_state_.value();
+    clone.current_state_ = clone.target_state_.value();
 
-    if (!clone->transition_walker_->can_accept_more_input())
+    if (!clone.transition_walker_->can_accept_more_input())
     {
-      clone->accepted_history_.push_back(clone->transition_walker_);
-      clone->transition_walker_ = nullptr;
-      clone->target_state_ = std::nullopt;
+      clone.accepted_history_.push_back(clone.transition_walker_);
+      clone.transition_walker_ = nullptr;
+      clone.target_state_ = std::nullopt;
     }
 
-    if (std::find(clone->state_machine_->end_states().begin(),
-                  clone->state_machine_->end_states().end(),
-                  clone->current_state_) != clone->state_machine_->end_states().end())
+    if (std::find(clone.state_machine_.end_states().begin(),
+                  clone.state_machine_.end_states().end(),
+                  clone.current_state_) != clone.state_machine_.end_states().end())
     {
       return std::make_tuple(clone, true);
     }
@@ -263,14 +236,14 @@ Walker::complete_transition(nb::ref<Walker> transition_walker)
 }
 
 // Branch method
-std::vector<nb::ref<Walker>>
+std::vector<Walker>
 Walker::branch(const std::optional<std::string> &token) const
 {
-  std::vector<nb::ref<Walker>> result;
+  std::vector<Walker> result;
 
   if (transition_walker_)
   {
-    std::vector<nb::ref<Walker>> transition_walkers;
+    std::vector<Walker> transition_walkers;
     if (transition_walker_->can_accept_more_input())
     {
       transition_walkers = transition_walker_->branch(token);
@@ -279,7 +252,7 @@ Walker::branch(const std::optional<std::string> &token) const
     for (auto &new_transition_walker : transition_walkers)
     {
       auto clone = this->clone();
-      clone->transition_walker_ = new_transition_walker;
+      clone.transition_walker_ = &new_transition_walker;
       result.push_back(clone);
     }
 
@@ -290,7 +263,7 @@ Walker::branch(const std::optional<std::string> &token) const
     }
   }
 
-  auto branched_walkers = state_machine_->branch_walker(nb::ref<Walker>((Walker *)this), token);
+  auto branched_walkers = state_machine_.branch_walker(*this, token);
   result.insert(result.end(), branched_walkers.begin(), branched_walkers.end());
   return result;
 }
@@ -392,7 +365,7 @@ std::string Walker::to_string() const
 {
   if (transition_walker_)
   {
-    return state_machine_->to_string() + ".Walker(" +
+    return state_machine_.to_string() + ".Walker(" +
            transition_walker_->to_string() + ")";
   }
   return __repr__();
@@ -425,7 +398,7 @@ std::string Walker::__repr__() const
   const std::string prefix = has_reached_accept_state() ? "✅ " : "";
   const std::string suffix = _accepts_more_input_ ? " 🔄" : "";
   const std::string header = prefix +
-                             StateMachine::get_name(state_machine()) + ".Walker" +
+                             StateMachine::get_name(state_machine_) + ".Walker" +
                              suffix;
 
   std::vector<std::string> info_parts;
