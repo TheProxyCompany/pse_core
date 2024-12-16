@@ -20,7 +20,7 @@ class StateMachine : public nb::intrusive_base
 {
 public:
   using State = std::variant<int, std::string>;
-  using Edge = std::pair<StateMachine, State>;
+  using Edge = std::pair<nb::ref<StateMachine>, State>;
   using VisitedEdge = std::tuple<State, std::optional<State>, std::optional<std::string>>;
   using StateGraph = std::unordered_map<State, std::vector<Edge>>;
 
@@ -36,43 +36,43 @@ public:
 
   virtual ~StateMachine() = default;
 
-  const State &start_state() const { return start_state_; }
-  void start_state(const State &value) { start_state_ = value; }
-
-  const std::vector<State> &end_states() const { return end_states_; }
-  void end_states(const std::vector<State> &value) { end_states_ = value; }
-
-  const StateGraph &state_graph() const { return state_graph_; }
-  void state_graph(const StateGraph &value) { state_graph_ = value; }
-
   bool is_optional() const { return is_optional_; }
   void is_optional(bool value) { is_optional_ = value; }
 
   bool is_case_sensitive() const { return is_case_sensitive_; }
   void is_case_sensitive(bool value) { is_case_sensitive_ = value; }
 
-  virtual Walker get_new_walker(std::optional<State> state = std::nullopt);
-  virtual std::vector<Walker> get_walkers(std::optional<State> state = std::nullopt);
+  virtual nb::ref<Walker> get_new_walker(std::optional<State> state = std::nullopt);
+  virtual std::vector<nb::ref<Walker>> get_walkers(std::optional<State> state = std::nullopt);
   virtual std::vector<Edge> get_edges(State state) const;
-  virtual std::vector<std::tuple<Walker, State, State>> get_transitions(Walker walker, std::optional<State> state = std::nullopt) const;
-  virtual std::vector<Walker> branch_walker(Walker walker, std::optional<std::string> token = std::nullopt) const;
-  virtual std::vector<Walker> advance(Walker walker, const std::string &token) const;
+  virtual std::vector<std::tuple<nb::ref<Walker>, State, State>> get_transitions(nb::ref<Walker> walker, std::optional<State> state = std::nullopt) const;
+  virtual std::vector<nb::ref<Walker>> branch_walker(nb::ref<Walker> walker, std::optional<std::string> token = std::nullopt);
+  virtual std::vector<nb::ref<Walker>> advance(nb::ref<Walker> walker, const std::string &token) const;
 
   virtual bool operator==(const StateMachine &other) const;
   virtual std::string to_string() const;
-  virtual std::string __repr__() const;
 
   /**
    * @brief Advance multiple walkers with a token, optionally using a vocabulary DAWG
    * @param walkers The walkers to advance
    * @param token The token to advance with
-   * @param vocab Optional vocabulary DAWG to validate against
+   * @param vocab vocabulary to validate against
    * @return Vector of pairs containing the token and resulting walker
    */
   static std::vector<std::pair<std::string, nb::ref<Walker>>> advance_all(
-      const std::vector<nb::ref<Walker>> &walkers,
+      std::vector<nb::ref<Walker>> &walkers,
       const std::string &token,
-      const std::shared_ptr<tsl::htrie_set<char>> &vocab = nullptr);
+      const tsl::htrie_set<char> &vocab);
+
+  /**
+   * @brief Advance multiple walkers with a token, optionally using a vocabulary DAWG
+   * @param walkers The walkers to advance
+   * @param token The token to advance with
+   * @return Vector of pairs containing the token and resulting walker
+   */
+  static std::vector<std::pair<std::string, nb::ref<Walker>>> advance_all(
+      std::vector<nb::ref<Walker>> &walkers,
+      const std::string &token);
 
   /**
    * @brief Convert a state to a string
@@ -93,10 +93,13 @@ public:
                         } }, state);
   }
 
-  static std::string get_name(const StateMachine &state_machine)
+  static std::string get_name(const nb::ref<StateMachine> &state_machine)
   {
-    std::string name = typeid(state_machine).name();
-    auto offset = name.find_first_not_of("0123456789");
-    return name.substr(offset);
+    nb::object obj = nb::find(state_machine);
+    nb::object cls = nb::getattr(obj, "__class__");
+    nb::object name_obj = nb::getattr(cls, "__name__");
+    std::string type_name = nb::str(name_obj).c_str();
+    return type_name;
   }
+
 };

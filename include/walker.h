@@ -20,7 +20,7 @@ public:
     using State = StateMachine::State;
     using VisitedEdge = std::tuple<State, std::optional<State>, std::optional<std::string>>;
 
-    StateMachine state_machine_;
+    nb::ref<StateMachine> state_machine_;
     std::vector<nb::ref<Walker>> accepted_history_;
     std::set<VisitedEdge> explored_edges_;
     State current_state_;
@@ -31,10 +31,10 @@ public:
     std::optional<std::string> _raw_value_;
     bool _accepts_more_input_;
 
-    Walker(StateMachine state_machine, std::optional<State> current_state = std::nullopt);
+    Walker(nb::ref<StateMachine> state_machine, std::optional<State> current_state = std::nullopt);
     virtual ~Walker() = default;
 
-    virtual std::vector<Walker> consume_token(const std::string &token) const;
+    virtual std::vector<nb::ref<Walker>> consume_token(const std::string &token);
     virtual bool can_accept_more_input() const;
     virtual bool is_within_value() const;
 
@@ -48,17 +48,17 @@ public:
 
     virtual nb::object parse_value(const std::optional<std::string> &value) const;
 
-    virtual Walker clone() const;
+    virtual nb::ref<Walker> clone() const;
 
-    std::optional<Walker> start_transition(
-        Walker transition_walker,
+    std::optional<nb::ref<Walker>> start_transition(
+        nb::ref<Walker> transition_walker,
         const std::optional<std::string> &token = std::nullopt,
         std::optional<State> start_state = std::nullopt,
         std::optional<State> target_state = std::nullopt);
 
-    std::tuple<std::optional<Walker>, bool> complete_transition(Walker transition_walker);
+    std::tuple<std::optional<nb::ref<Walker>>, bool> complete_transition(nb::ref<Walker> transition_walker);
 
-    std::vector<Walker> branch(const std::optional<std::string> &token = std::nullopt) const;
+    std::vector<nb::ref<Walker>> branch(const std::optional<std::string> &token = std::nullopt);
 
     VisitedEdge current_edge() const;
 
@@ -68,31 +68,6 @@ public:
     virtual bool operator==(const Walker &other) const;
 
     virtual std::string to_string() const;
-    virtual std::string __repr__() const;
-
-    const StateMachine &state_machine() const { return state_machine_; }
-    void state_machine(const StateMachine &value) { state_machine_ = value; }
-
-    const std::vector<nb::ref<Walker>> &accepted_history() const { return accepted_history_; }
-    void accepted_history(const std::vector<nb::ref<Walker>> &value) { accepted_history_ = value; }
-
-    const std::set<VisitedEdge> &explored_edges() const { return explored_edges_; }
-    void explored_edges(const std::set<VisitedEdge> &value) { explored_edges_ = value; }
-
-    const State &current_state() const { return current_state_; }
-    void current_state(const State &value) { current_state_ = value; }
-
-    const std::optional<State> &target_state() const { return target_state_; }
-    void target_state(const std::optional<State> &value) { target_state_ = value; }
-
-    const nb::ref<Walker> &transition_walker() const { return transition_walker_; }
-    void transition_walker(const nb::ref<Walker> &value) { transition_walker_ = value; }
-
-    size_t consumed_character_count() const { return consumed_character_count_; }
-    void consumed_character_count(size_t value) { consumed_character_count_ = value; }
-
-    const std::optional<std::string> &remaining_input() const { return remaining_input_; }
-    void remaining_input(const std::optional<std::string> &value) { remaining_input_ = value; }
 
 private:
     std::string _format_current_edge() const;

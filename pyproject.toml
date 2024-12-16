@@ -20,7 +20,7 @@ MACOSX_DEPLOYMENT_TARGET = "10.14"
 [tool.py-build-cmake.cmake]
 args = ["-Wdev"]
 build_args = ["-j"]
-build_type = "Release"
+build_type = "Debug"
 env = {}
 find_python = true
 find_python3 = false

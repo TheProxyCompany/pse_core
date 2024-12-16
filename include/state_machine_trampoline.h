@@ -1,17 +1,18 @@
 #pragma once
 #include <nanobind/trampoline.h>
 #include "state_machine.h"
+#include "walker.h"
 
 class PyStateMachine : public StateMachine
 {
-    NB_TRAMPOLINE(StateMachine, 9);
+    NB_TRAMPOLINE(StateMachine, 8);
 
-    Walker get_new_walker(std::optional<State> state = std::nullopt) override
+    nb::ref<Walker> get_new_walker(std::optional<State> state = std::nullopt) override
     {
         NB_OVERRIDE(get_new_walker, state);
     }
 
-    std::vector<Walker> get_walkers(std::optional<State> state = std::nullopt) override
+    std::vector<nb::ref<Walker>> get_walkers(std::optional<State> state = std::nullopt) override
     {
         NB_OVERRIDE(get_walkers, state);
     }
@@ -21,35 +22,29 @@ class PyStateMachine : public StateMachine
         NB_OVERRIDE(get_edges, state);
     }
 
-    std::vector<std::tuple<Walker, State, State>> get_transitions(
-        Walker walker, std::optional<State> state = std::nullopt) const override
+    std::vector<std::tuple<nb::ref<Walker>, State, State>> get_transitions(
+        nb::ref<Walker> walker, std::optional<State> state = std::nullopt) const override
     {
         NB_OVERRIDE(get_transitions, walker, state);
     }
 
-    std::vector<Walker> advance(Walker walker, const std::string &token) const override
+    std::vector<nb::ref<Walker>> advance(nb::ref<Walker> walker, const std::string &token) const override
     {
         NB_OVERRIDE(advance, walker, token);
     }
 
-    std::vector<Walker> branch_walker(Walker walker,
-                                             std::optional<std::string> token = std::nullopt) const override
+    std::vector<nb::ref<Walker>> branch_walker(nb::ref<Walker> walker, std::optional<std::string> token = std::nullopt) override
     {
         NB_OVERRIDE(branch_walker, walker, token);
     }
 
     bool operator==(const StateMachine &other) const override
     {
-        NB_OVERRIDE(operator==, other);
+        NB_OVERRIDE_NAME("__eq__", operator==, other);
     }
 
     std::string to_string() const override
     {
-        NB_OVERRIDE(to_string);
-    }
-
-    std::string __repr__() const override
-    {
-        NB_OVERRIDE(__repr__);
+        NB_OVERRIDE_NAME("__repr__", to_string);
     }
 };

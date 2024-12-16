@@ -6,15 +6,15 @@ class PyWalker : public Walker
 {
 public:
     // NB_TRAMPOLINE macro defines the interface
-    NB_TRAMPOLINE(Walker, 12);
+    NB_TRAMPOLINE(Walker, 15);
 
     // Pure virtual methods
-    Walker clone() const override
+    nb::ref<Walker> clone() const override
     {
         NB_OVERRIDE(clone);
     }
 
-    std::vector<Walker> consume_token(const std::string &token) const override
+    std::vector<nb::ref<Walker>> consume_token(const std::string &token) override
     {
         NB_OVERRIDE(consume_token, token);
     }
@@ -67,5 +67,15 @@ public:
     nb::object get_current_value() const override
     {
         NB_OVERRIDE(get_current_value);
+    }
+
+    std::optional<std::string> get_raw_value() const override
+    {
+        NB_OVERRIDE(get_raw_value);
+    }
+
+    std::string to_string() const override
+    {
+        NB_OVERRIDE_NAME("__repr__", to_string);
     }
 };
