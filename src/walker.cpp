@@ -97,7 +97,12 @@ bool Walker::can_accept_more_input() const
   {
     return true;
   }
-  bool has_current_edges = state_machine_->state_graph_.at(current_state_).size() > 0;
+  auto it = state_machine_->state_graph_.find(current_state_);
+  if (it == state_machine_->state_graph_.end())
+  {
+    return _accepts_more_input_;
+  }
+  bool has_current_edges = it->second.size() > 0;
   return _accepts_more_input_ || has_current_edges;
 }
 
@@ -462,7 +467,7 @@ std::string Walker::to_string() const
       {
         indented_transition.replace(pos, 1, "\n" + indent);
       }
-      info_parts.push_back("Transition:\n" + indented_transition);
+      info_parts.push_back("Transition:\n" + indent + indented_transition);
     }
   }
 

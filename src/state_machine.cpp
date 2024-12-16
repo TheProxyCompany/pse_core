@@ -165,6 +165,11 @@ std::vector<nb::ref<Walker>> StateMachine::advance(nb::ref<Walker> walker, const
                 continue;
             }
 
+            if (is_accepted)
+            {
+                new_walker = new AcceptedState(*new_walker);
+            }
+
             if ((*new_walker)->remaining_input_)
             {
                 queue.push_back({*new_walker, *(*new_walker)->remaining_input_});
