@@ -262,11 +262,11 @@ bool StateMachine::operator==(const StateMachine &other) const
 
 std::string StateMachine::to_string() const
 {
-    std::string result = "StateMachine";
+    std::string result = this->get_name();
 
     if (state_graph_.empty())
     {
-        return result + "(empty)";
+        return result + "()";
     }
 
     result += "(graph={\n";

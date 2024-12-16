@@ -305,7 +305,7 @@ nb::object Walker::parse_value(const std::optional<std::string> &value) const
 {
   if (!value)
   {
-    return {};
+    return nb::none();
   }
 
   const std::string &val = *value;
@@ -316,7 +316,7 @@ nb::object Walker::parse_value(const std::optional<std::string> &value) const
     double float_value = std::stod(val);
     return nb::cast(float_value);
   }
-  catch (const std::exception &)
+  catch (const std::invalid_argument &)
   {
     // Not a float
   }
@@ -393,7 +393,7 @@ std::string Walker::to_string() const
   const std::string prefix = has_reached_accept_state() ? "✅ " : "";
   const std::string suffix = _accepts_more_input_ ? " 🔄" : "";
   const std::string header = prefix +
-                             StateMachine::get_name(state_machine_) + ".Walker" +
+                             state_machine_->get_name() + ".Walker" +
                              suffix;
 
   std::vector<std::string> info_parts;

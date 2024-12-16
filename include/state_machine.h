@@ -52,6 +52,15 @@ public:
   virtual bool operator==(const StateMachine &other) const;
   virtual std::string to_string() const;
 
+  std::string get_name() const
+  {
+    nb::object obj = nb::find(this);
+    nb::object cls = nb::getattr(obj, "__class__");
+    nb::object name_obj = nb::getattr(cls, "__name__");
+    std::string type_name = nb::str(name_obj).c_str();
+    return type_name;
+  }
+
   /**
    * @brief Advance multiple walkers with a token, optionally using a vocabulary DAWG
    * @param walkers The walkers to advance
@@ -91,15 +100,6 @@ public:
                         } else {
                           return "";
                         } }, state);
-  }
-
-  static std::string get_name(const nb::ref<StateMachine> &state_machine)
-  {
-    nb::object obj = nb::find(state_machine);
-    nb::object cls = nb::getattr(obj, "__class__");
-    nb::object name_obj = nb::getattr(cls, "__name__");
-    std::string type_name = nb::str(name_obj).c_str();
-    return type_name;
   }
 
 };
