@@ -114,11 +114,19 @@ NB_MODULE(_core, m)
             [](Walker &w, std::optional<std::string> v)
             { w._raw_value_ = v; },
             nb::arg().none())
+
+        .def_prop_rw(
+            "transition_walker",
+            [](const Walker &w) -> nb::ref<Walker>
+            { return w.transition_walker_; },
+            [](Walker &w, nb::ref<Walker> v)
+            { w.transition_walker_ = v; },
+            nb::arg().none())
+
         .def_rw("accepted_history", &Walker::accepted_history_)
         .def_rw("explored_edges", &Walker::explored_edges_)
         .def_rw("current_state", &Walker::current_state_)
         .def_rw("target_state", &Walker::target_state_)
-        .def_rw("transition_walker", &Walker::transition_walker_)
         .def_rw("consumed_character_count", &Walker::consumed_character_count_)
         .def_rw("remaining_input", &Walker::remaining_input_, "remaining_input"_a = nb::none())
         .def_rw("_accepts_more_input", &Walker::_accepts_more_input_)

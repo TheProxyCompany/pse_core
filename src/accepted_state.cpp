@@ -52,6 +52,11 @@ std::vector<nb::ref<Walker>> AcceptedState::consume_token(const std::string &tok
     return accepted_walker_->consume_token(token);
 }
 
+nb::object AcceptedState::get_current_value() const
+{
+    return accepted_walker_->get_current_value();
+}
+
 bool AcceptedState::operator==(const Walker &other) const
 {
     return *accepted_walker_ == other;

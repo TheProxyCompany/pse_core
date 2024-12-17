@@ -29,7 +29,31 @@ Walker::Walker(nb::ref<StateMachine> state_machine,
 
 nb::ref<Walker> Walker::clone() const
 {
-  return new Walker(*this);
+  nb::object self_py = nb::find(this);
+  if (!self_py.is_valid())
+  {
+    // fallback behavior if no python identity
+    return nb::ref<Walker>(new Walker(*this));
+  }
+  nb::object cls = nb::getattr(self_py, "__class__");
+  nb::object python_walker = cls(state_machine_);
+
+  // cast to pointer - not by value
+  Walker *new_walker = nb::cast<Walker *>(python_walker);
+
+  // copy fields
+  new_walker->accepted_history_ = accepted_history_;
+  new_walker->explored_edges_ = explored_edges_;
+  new_walker->current_state_ = current_state_;
+  new_walker->target_state_ = target_state_;
+  new_walker->transition_walker_ = transition_walker_;
+  new_walker->consumed_character_count_ = consumed_character_count_;
+  new_walker->remaining_input_ = remaining_input_;
+  new_walker->_raw_value_ = _raw_value_;
+  new_walker->_accepts_more_input_ = _accepts_more_input_;
+
+  // now new_walker is a heap-allocated object managed by nanobind
+  return nb::ref<Walker>(new_walker);
 }
 
 // Property-like getters

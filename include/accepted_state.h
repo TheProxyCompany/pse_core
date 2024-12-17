@@ -29,6 +29,8 @@ public:
     // Override consume_token to delegate to accepted walker
     std::vector<nb::ref<Walker>> consume_token(const std::string& token) override;
 
+    nb::object get_current_value() const override;
+
     // Override equality operator
     bool operator==(const Walker &other) const override;
 
